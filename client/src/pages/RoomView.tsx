@@ -35,12 +35,20 @@ export const RoomView: React.FC = () => {
     socket.on('game_started', handleUpdate);
     socket.on('game_state_updated', handleUpdate);
 
+    // Si el usuario usa el botón "Atrás" del navegador o Android (popstate)
+    const handlePopState = () => {
+      if (socket && id) socket.emit('leave_room', { roomId: id, playerId });
+      localStorage.removeItem('duoplay_roomId');
+    };
+    window.addEventListener('popstate', handlePopState);
+
     return () => {
       socket.off('player_joined', handleUpdate);
       socket.off('player_disconnected', handleUpdate);
       socket.off('player_left', handlePlayerLeft);
       socket.off('game_started', handleUpdate);
       socket.off('game_state_updated', handleUpdate);
+      window.removeEventListener('popstate', handlePopState);
     };
   }, [socket, id, navigate, room, playerId]);
 
@@ -62,8 +70,8 @@ export const RoomView: React.FC = () => {
   const leaveRoom = () => {
     if (socket && id) {
       socket.emit('leave_room', { roomId: id, playerId });
-      localStorage.removeItem('duoplay_roomId');
     }
+    localStorage.removeItem('duoplay_roomId');
     navigate('/', { replace: true });
   };
 
