@@ -3,6 +3,7 @@ export interface Player {
   name: string;
   socketId: string;
   connected: boolean;
+  disconnectExpiresAt?: number;
 }
 
 export type PlayerSymbol = 'X' | 'O';
@@ -25,7 +26,7 @@ export interface MatchState {
   roundWinner: string | null | 'draw';
   matchWinner: string | null;
   status: 'playing' | 'round_finished' | 'match_finished';
-  readyPlayers: string[]; // array of playerIds who are ready for next round/rematch
+  readyPlayers: string[]; 
 }
 
 export interface Room {

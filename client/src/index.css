@@ -6,11 +6,16 @@
 }
 
 body {
-  background-color: #0f172a; /* slate-900 */
+  background-color: #000000; /* Pure black */
   color: #f8fafc; /* slate-50 */
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   overflow-x: hidden;
+  /* Support safe areas for mobile notches */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 #root {
@@ -19,6 +24,7 @@ body {
   flex-direction: column;
 }
 
+/* Animations */
 @keyframes popIn {
   0% { transform: scale(0.5); opacity: 0; }
   70% { transform: scale(1.1); }
@@ -29,23 +35,65 @@ body {
   animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
 .glow-blue {
+  color: #3b82f6;
   text-shadow: 0 0 10px rgba(59, 130, 246, 0.8), 0 0 20px rgba(59, 130, 246, 0.4);
 }
 
 .glow-red {
+  color: #ef4444;
   text-shadow: 0 0 10px rgba(239, 68, 68, 0.8), 0 0 20px rgba(239, 68, 68, 0.4);
 }
 
-.strike-line {
-  position: absolute;
-  background-color: currentColor;
-  border-radius: 4px;
-  transform-origin: left center;
-  animation: drawLine 0.4s ease-out forwards;
-  z-index: 10;
+/* Utilities for premium dark theme */
+.panel-dark {
+  background-color: #050505;
+  border: 1px solid #111111;
 }
 
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 8px; /* Transparent gaps */
+  background-color: transparent;
+}
+
+.board-cell {
+  background-color: #0a0a0a;
+  border: 1px solid #151515;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: min(15vw, 4rem);
+  font-weight: 900;
+  transition: all 0.2s ease;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+@media (min-width: 768px) {
+  .board-cell {
+    font-size: 5rem;
+  }
+}
+
+.board-cell:not(:disabled):hover {
+  background-color: #111111;
+  border-color: #222222;
+}
+
+.board-cell:not(:disabled):active {
+  transform: scale(0.95);
+}
+
+/* Winning Line */
 @keyframes drawLine {
   0% { transform: scaleX(0); opacity: 0; }
   100% { transform: scaleX(1); opacity: 1; }

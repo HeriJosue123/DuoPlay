@@ -29,6 +29,7 @@ class RoomManager {
             existingPlayer.socketId = player.socketId;
             existingPlayer.connected = true;
             existingPlayer.name = player.name;
+            existingPlayer.disconnectExpiresAt = undefined;
             this.clearDisconnectTimer(existingPlayer.id);
             return { success: true, room };
         }
@@ -81,9 +82,10 @@ class RoomManager {
         const player = room?.players.find(p => p.socketId === socketId);
         if (room && player) {
             player.connected = false;
+            player.disconnectExpiresAt = Date.now() + 30000; // 30 seconds to reconnect
             const timer = setTimeout(() => {
                 onTimeout(room, player.id);
-            }, 10000); // 10 seconds to reconnect
+            }, 30000);
             this.disconnectTimers.set(player.id, timer);
             return { room, player };
         }
