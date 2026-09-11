@@ -13,7 +13,7 @@ interface UseVoiceChatProps {
 
 export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }: UseVoiceChatProps) => {
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // OFF by default
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
 
@@ -75,9 +75,9 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       console.log('[VOICE] getUserMedia OK');
       
       localStreamRef.current = stream;
-      // Apply initial mute state
+      // Force initial tracks to be disabled (Mute is ON by default)
       stream.getAudioTracks().forEach(track => {
-        track.enabled = !isMuted;
+        track.enabled = false;
       });
 
       const pc = new RTCPeerConnection({
@@ -152,7 +152,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       console.error('[VOICE] Error accessing microphone:', err);
       setVoiceState('no-permission');
     }
-  }, [roomId, playerId, socket, isInitiator, isMuted, attemptSendOffer]);
+  }, [roomId, playerId, socket, isInitiator, attemptSendOffer]);
 
   // Clean up WebRTC
   const cleanupWebRTC = useCallback(() => {

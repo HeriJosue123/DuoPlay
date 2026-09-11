@@ -88,7 +88,9 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
           {voiceState === 'connecting' && 'Conectando...'}
           {voiceState === 'requesting' && 'Permiso...'}
           {voiceState === 'no-permission' && 'Sin acceso'}
-          {voiceState === 'connected' && (isSpeaking ? <span className="text-green-400">Hablando...</span> : 'Conectado')}
+          {voiceState === 'connected' && (
+            isMuted ? 'Micrófono apagado' : (isSpeaking ? <span className="text-green-400">Hablando...</span> : 'Micrófono encendido')
+          )}
         </div>
 
         <button
