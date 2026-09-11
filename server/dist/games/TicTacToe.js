@@ -5,9 +5,9 @@ class TicTacToe {
     initGame(room) {
         const p1 = room.players[0].id;
         const p2 = room.players[1].id;
-        // Randomly assign initial symbols
-        const p1Symbol = Math.random() > 0.5 ? 'X' : 'O';
-        const p2Symbol = p1Symbol === 'X' ? 'O' : 'X';
+        // Player 1 is always X, Player 2 is always O
+        const p1Symbol = 'X';
+        const p2Symbol = 'O';
         room.matchState = {
             round: 1,
             totalRounds: room.settings.totalRounds,
@@ -140,14 +140,8 @@ class TicTacToe {
                 this.initGame(room);
             }
             else if (room.matchState.status === 'round_finished') {
-                // Next round: alternate symbols
+                // Next round: do not alternate symbols, creator is always X.
                 room.matchState.round += 1;
-                const p1 = room.players[0].id;
-                const p2 = room.players[1].id;
-                // Swap symbols
-                const currentP1Symbol = room.matchState.symbolAssignments[p1];
-                room.matchState.symbolAssignments[p1] = room.matchState.symbolAssignments[p2];
-                room.matchState.symbolAssignments[p2] = currentP1Symbol;
                 this.initRound(room);
             }
         }

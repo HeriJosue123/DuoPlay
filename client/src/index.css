@@ -50,6 +50,11 @@ body {
   text-shadow: 0 0 10px rgba(239, 68, 68, 0.8), 0 0 20px rgba(239, 68, 68, 0.4);
 }
 
+.glow-yellow {
+  color: #eab308;
+  text-shadow: 0 0 10px rgba(234, 179, 8, 0.8), 0 0 20px rgba(234, 179, 8, 0.4);
+}
+
 /* Utilities for premium dark theme */
 .panel-dark {
   background-color: #050505;

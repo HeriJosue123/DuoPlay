@@ -195,10 +195,34 @@ export const TicTacToe: React.FC<Props> = ({ room, playerId, onLeave }) => {
       {/* Disconnect Overlay for playing area */}
       <div className="w-full relative">
         {opponent && !opponent.connected && timeLeft !== null && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm rounded-[2rem] border border-[#222]">
-            <p className="text-sm font-black text-red-500 tracking-[0.2em] mb-2 glow-red">JUGADOR DESCONECTADO</p>
-            <p className="text-xs font-bold text-slate-400 mb-6">Esperando reconexión...</p>
-            <div className="text-4xl font-black text-white font-mono">00:{timeLeft.toString().padStart(2, '0')}</div>
+          <div className="absolute inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md rounded-[2rem] animate-in fade-in">
+            <div className="w-full max-w-[320px] panel-dark p-6 rounded-3xl border border-yellow-500/30 text-center shadow-[0_0_30px_rgba(234,179,8,0.1)] flex flex-col relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-full bg-yellow-500/5 pointer-events-none" />
+              <div className="text-4xl mb-3 animate-pulse relative z-10">🟡</div>
+              <h3 className="text-lg font-black text-white tracking-widest uppercase mb-1 relative z-10 glow-yellow">
+                JUGADOR DESCONECTADO
+              </h3>
+              <p className="text-xs font-bold text-slate-400 mb-4 relative z-10">Esperando reconexión...</p>
+              
+              <div className="text-3xl font-black text-white font-mono mb-6 relative z-10">
+                {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
+              </div>
+              
+              <div className="border-t border-[#333] pt-4 space-y-3 relative z-10">
+                <button 
+                  onClick={() => {/* Placebo: Just acknowledges */}}
+                  className="w-full bg-white hover:bg-gray-200 text-black font-black py-3 px-4 rounded-xl transition-transform active:scale-95 tracking-widest text-xs"
+                >
+                  MANTENER LA PARTIDA
+                </button>
+                <button 
+                  onClick={onLeave}
+                  className="w-full bg-[#111] hover:bg-[#222] border border-red-500/30 text-red-400 font-black py-3 px-4 rounded-xl transition-transform active:scale-95 tracking-widest text-xs"
+                >
+                  SALIR DE LA PARTIDA
+                </button>
+              </div>
+            </div>
           </div>
         )}
 

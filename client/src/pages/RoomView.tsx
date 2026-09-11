@@ -12,6 +12,7 @@ export const RoomView: React.FC = () => {
   const { socket, playerId } = useSocket();
   const [room, setRoom] = useState<Room | null>(location.state?.room || null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [playerAbandoned, setPlayerAbandoned] = useState(false);
   const isLeaving = React.useRef(false);
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export const RoomView: React.FC = () => {
     
     const handlePlayerLeft = (updatedRoom: Room) => {
       setRoom(updatedRoom);
-      alert('EL JUGADOR ABANDONÓ LA PARTIDA DEFINITIVAMENTE');
+      setPlayerAbandoned(true);
     };
 
     socket.on('player_joined', handleUpdate);
@@ -114,6 +115,44 @@ export const RoomView: React.FC = () => {
                 SALIR
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Player Abandoned Modal */}
+      {playerAbandoned && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-in fade-in zoom-in">
+          <div className="w-full max-w-sm panel-dark p-8 rounded-[2rem] border border-red-500/30 space-y-8 text-center animate-pop relative overflow-hidden shadow-[0_0_50px_rgba(239,68,68,0.15)]">
+            <div className="absolute top-0 left-0 w-full h-full bg-red-500/5 pointer-events-none" />
+            
+            <div className="text-6xl mb-4 relative z-10 animate-bounce">
+              🚪
+            </div>
+            
+            <div className="space-y-2 relative z-10">
+              <h2 className="text-2xl font-black text-white uppercase tracking-widest glow-red leading-tight">
+                JUGADOR ABANDONÓ<br/>LA PARTIDA
+              </h2>
+            </div>
+            
+            <div className="space-y-1 relative z-10">
+              <p className="text-sm font-bold text-slate-400">El otro jugador salió</p>
+              <p className="text-sm font-bold text-slate-400">definitivamente de la sala.</p>
+            </div>
+            
+            <div className="text-xs font-black tracking-[0.4em] text-red-500 mb-6 uppercase relative z-10 pt-6 border-t border-[#333]">
+              ⏱ PARTIDA FINALIZADA
+            </div>
+            
+            <button 
+              onClick={() => {
+                localStorage.removeItem('duoplay_roomId');
+                navigate('/', { replace: true });
+              }}
+              className="w-full bg-[#111] hover:bg-[#222] border border-[#333] text-white font-black py-4 px-6 rounded-2xl transition-transform active:scale-95 tracking-widest text-sm relative z-10"
+            >
+              VOLVER AL MENÚ
+            </button>
           </div>
         </div>
       )}
