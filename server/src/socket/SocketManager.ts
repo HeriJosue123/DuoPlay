@@ -72,7 +72,7 @@ export class SocketManager {
         this.ticTacToe.initGame(room);
       }
       this.io.to(room.roomId).emit('game_started', room);
-      callback({ success: true });
+      if (callback) callback({ success: true });
     });
 
     socket.on('make_move', (data: { roomId: string, playerId: string, move: any }, callback) => {

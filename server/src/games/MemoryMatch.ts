@@ -48,13 +48,17 @@ export class MemoryMatch implements GameEngine {
       board: cards,
       firstSelection: null,
       secondSelection: null,
-      isProcessing: false
+      isProcessing: false,
+      pairsFound: {
+        [room.players[0].id]: 0,
+        [room.players[1] ? room.players[1].id : 'dummy']: 0
+      }
     } as MemoryMatchState;
 
     room.matchState.status = 'playing';
     room.matchState.roundWinner = null;
     room.matchState.readyPlayers = [];
-    room.matchState.score = { [room.players[0].id]: 0, [room.players[1].id]: 0 };
+    // DO NOT RESET matchState.score, because that tracks Rounds won!
     room.currentTurn = room.players[0].id;
   }
 
@@ -85,7 +89,8 @@ export class MemoryMatch implements GameEngine {
       if (firstCard.emoji === secondCard.emoji) {
         firstCard.isMatched = true;
         secondCard.isMatched = true;
-        room.matchState.score[playerId] += 1;
+        state.pairsFound[playerId] += 1; // Increment pairs found in the current round
+        
         state.firstSelection = null;
         state.secondSelection = null;
         state.isProcessing = false;
@@ -97,6 +102,8 @@ export class MemoryMatch implements GameEngine {
 
   handleResolveTurn(room: Room, playerId: string): { success: boolean, message?: string } {
     if (room.status !== 'playing' || !room.matchState || room.matchState.status !== 'playing') return { success: false, message: 'Game is not in playing state.' };
+    if (room.currentTurn !== playerId) return { success: false, message: 'Not your turn to resolve.' };
+    
     const state = room.gameState as MemoryMatchState;
     if (!state || !state.isProcessing || state.firstSelection === null || state.secondSelection === null) return { success: false, message: 'Nothing to resolve.' };
 
@@ -124,16 +131,33 @@ export class MemoryMatch implements GameEngine {
       const p2 = room.players[1] ? room.players[1].id : null;
       if (!p2) {
         room.matchState.roundWinner = p1;
+        room.matchState.score[p1] += 1;
       } else {
-        const p1Score = room.matchState.score[p1];
-        const p2Score = room.matchState.score[p2];
-        if (p1Score > p2Score) room.matchState.roundWinner = p1;
-        else if (p2Score > p1Score) room.matchState.roundWinner = p2;
-        else room.matchState.roundWinner = 'draw';
+        const p1Pairs = state.pairsFound[p1];
+        const p2Pairs = state.pairsFound[p2];
+        if (p1Pairs > p2Pairs) {
+          room.matchState.roundWinner = p1;
+          room.matchState.score[p1] += 1;
+        } else if (p2Pairs > p1Pairs) {
+          room.matchState.roundWinner = p2;
+          room.matchState.score[p2] += 1;
+        } else {
+          room.matchState.roundWinner = 'draw';
+          // Draw gives 0 points typically.
+        }
       }
+
       if (room.matchState.round >= room.matchState.totalRounds) {
         room.matchState.status = 'match_finished';
-        room.matchState.matchWinner = room.matchState.roundWinner;
+        if (!p2) {
+          room.matchState.matchWinner = p1;
+        } else {
+          const p1Score = room.matchState.score[p1];
+          const p2Score = room.matchState.score[p2];
+          if (p1Score > p2Score) room.matchState.matchWinner = p1;
+          else if (p2Score > p1Score) room.matchState.matchWinner = p2;
+          else room.matchState.matchWinner = 'draw';
+        }
       }
     }
   }

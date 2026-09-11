@@ -26,6 +26,7 @@ export interface MemoryMatchState {
   firstSelection: number | null;
   secondSelection: number | null;
   isProcessing: boolean;
+  pairsFound: { [playerId: string]: number };
 }
 
 export interface Score {

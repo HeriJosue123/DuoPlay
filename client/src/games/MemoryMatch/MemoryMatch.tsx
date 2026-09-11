@@ -14,6 +14,7 @@ interface MemoryMatchState {
   firstSelection: number | null;
   secondSelection: number | null;
   isProcessing: boolean;
+  pairsFound: { [playerId: string]: number };
 }
 
 interface MemoryMatchProps {
@@ -73,8 +74,8 @@ export const MemoryMatch: React.FC<MemoryMatchProps> = ({ room, playerId, onLeav
           </div>
           
           <div className="space-y-2 text-slate-400 font-bold relative z-10">
-             <p>Has conseguido {matchState.score[playerId] || 0} parejas</p>
-             <p>Tu rival consiguió {matchState.score[p2?.id === playerId ? p1?.id : p2?.id] || 0} parejas</p>
+             <p>Has ganado {matchState.score[playerId] || 0} {matchState.score[playerId] === 1 ? 'ronda' : 'rondas'}</p>
+             <p>Tu rival ganó {matchState.score[p2?.id === playerId ? p1?.id : p2?.id] || 0} {matchState.score[p2?.id === playerId ? p1?.id : p2?.id] === 1 ? 'ronda' : 'rondas'}</p>
           </div>
           
           <div className="pt-6 relative z-10">
@@ -118,7 +119,7 @@ export const MemoryMatch: React.FC<MemoryMatchProps> = ({ room, playerId, onLeav
             Tus Parejas
           </span>
           <span className={`text-2xl font-black ${p1?.id === playerId ? 'text-blue-400' : 'text-white'}`}>
-            {matchState?.score[playerId] || 0}
+            {gameState?.pairsFound?.[playerId] || 0}
           </span>
         </div>
         
@@ -133,7 +134,7 @@ export const MemoryMatch: React.FC<MemoryMatchProps> = ({ room, playerId, onLeav
             Rival
           </span>
           <span className={`text-2xl font-black ${p2?.id === playerId ? 'text-blue-400' : 'text-white'}`}>
-            {matchState?.score[p2?.id === playerId ? p1?.id : p2?.id] || 0}
+            {gameState?.pairsFound?.[p2?.id === playerId ? p1?.id : p2?.id] || 0}
           </span>
         </div>
       </div>
