@@ -147,10 +147,7 @@ export const TicTacToe: React.FC<Props> = ({ room, playerId, onLeave }) => {
     <div className="flex flex-col items-center justify-center flex-1 p-4 space-y-6 w-full max-w-[500px] mx-auto">
       
       {/* Header Info */}
-      <div className="w-full flex justify-between items-center px-2 pt-4">
-        <button onClick={onLeave} className="text-slate-500 hover:text-white text-xs font-bold tracking-widest uppercase transition-colors">
-          ← Abandonar
-        </button>
+      <div className="w-full flex justify-center items-center px-2 pt-4">
         <div className="flex items-center gap-4">
           <div className="text-xs font-black text-white tracking-[0.2em] uppercase bg-[#111] border border-[#222] px-3 py-1 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.05)]">
             RONDA {matchState.round} DE {matchState.totalRounds}
