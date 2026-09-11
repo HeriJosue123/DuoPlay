@@ -10,10 +10,22 @@ dotenv.config();
 const app = express();
 app.use(cors());
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    service: 'duoplay-server'
+  });
+});
+
+app.get('/', (req, res) => {
+  res.status(200).send('DuoPlay API is running. Socket.io is active.');
+});
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: '*', // Allow all origins for local testing
+    origin: '*', // Allows connections from the frontend on Render
     methods: ['GET', 'POST']
   }
 });
@@ -22,6 +34,7 @@ new SocketManager(io);
 
 const PORT = process.env.PORT || 3001;
 
-httpServer.listen(PORT, () => {
+// Escuchar en 0.0.0.0 es recomendado para servicios alojados como Render
+httpServer.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
 });
