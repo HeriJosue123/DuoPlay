@@ -87,6 +87,16 @@ export const TicTacToe: React.FC<Props> = ({ room, playerId, onLeave }) => {
     }
   }, [matchState.status, matchState.roundWinner, matchState.matchWinner, playerId, mySymbol]);
 
+  // Auto-advance to next round
+  useEffect(() => {
+    if (matchState.status === 'round_finished') {
+      const timer = setTimeout(() => {
+        socket?.emit('ready_for_next_round', { roomId: room.roomId, playerId });
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [matchState.status, socket, room.roomId, playerId]);
+
   const handleCellClick = (index: number) => {
     if (!isMyTurn || gameState.board[index] !== null || matchState.status !== 'playing') return;
     socket?.emit('make_move', { roomId: room.roomId, playerId, move: { index } });
@@ -222,47 +232,18 @@ export const TicTacToe: React.FC<Props> = ({ room, playerId, onLeave }) => {
             )
           })}
         </div>
-      </div>
 
-      {/* Round Finished Overlay */}
-      {matchState.status === 'round_finished' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="w-full max-w-sm panel-dark p-8 rounded-[2rem] space-y-8 text-center animate-pop relative overflow-hidden">
-            <div className="text-xs font-black tracking-[0.3em] text-slate-500">
-              RONDA {matchState.round} FINALIZADA
-            </div>
-            <div className={`text-3xl font-black text-white ${matchState.roundWinner === playerId ? 'glow-blue' : matchState.roundWinner === 'draw' ? '' : 'glow-red'}`}>
-              {matchState.roundWinner === 'draw' ? 'EMPATE' : 
-               matchState.roundWinner === playerId ? '🏆 ¡GANASTE!' : 
-               `${opponent?.name.toUpperCase()} GANÓ`}
-            </div>
-            
-            <div className="flex justify-center items-center gap-6 py-4">
-              <div className="text-center">
-                <div className="text-xs font-bold text-slate-500 mb-1 uppercase">{myPlayer?.name}</div>
-                <div className="text-3xl font-black text-white">{matchState.score[playerId]}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xs font-bold text-slate-500 mb-1 uppercase">{opponent?.name}</div>
-                <div className="text-3xl font-black text-white">{opponent ? matchState.score[opponent.id] : 0}</div>
-              </div>
-            </div>
-            
-            <div className="pt-4 border-t border-[#222] space-y-4">
-              <button 
-                onClick={handleReady}
-                disabled={iAmReady}
-                className={`w-full font-black py-4 px-6 rounded-2xl transition-all tracking-widest text-xs ${iAmReady ? 'bg-[#111] text-slate-500 border border-[#333] cursor-not-allowed' : 'bg-white hover:bg-gray-200 text-black active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)]'}`}
-              >
-                {iAmReady ? 'ESPERANDO AL RIVAL...' : 'LISTO PARA CONTINUAR'}
-              </button>
-              {opponentIsReady && !iAmReady && (
-                <p className="text-xs font-bold text-green-500 tracking-widest animate-pulse">{opponent?.name} está listo</p>
-              )}
+        {/* Round Finished Overlay (Small Temporary Popup) */}
+        {matchState.status === 'round_finished' && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+            <div className="bg-black/90 text-white font-black px-8 py-4 rounded-full border border-[#333] animate-pop shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur-md text-2xl tracking-widest text-center">
+              {matchState.roundWinner === 'draw' 
+                ? '🤝 EMPATE' 
+                : `🎉 +1 ${matchState.roundWinner === playerId ? myPlayer?.name.toUpperCase() : opponent?.name?.toUpperCase()}`}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Match Finished Overlay */}
       {matchState.status === 'match_finished' && (
@@ -277,12 +258,13 @@ export const TicTacToe: React.FC<Props> = ({ room, playerId, onLeave }) => {
             )}
             
             <div className="space-y-4 relative z-10">
-              <div className={`text-xs font-black tracking-[0.4em] ${matchState.matchWinner === playerId ? 'text-blue-400' : matchState.matchWinner === 'draw' ? 'text-slate-400' : 'text-red-400'}`}>
-                {matchState.matchWinner === 'draw' ? 'FIN DEL JUEGO' : 'CAMPEÓN DEL MATCH'}
+              <div className="text-6xl mb-4">
+                {matchState.matchWinner === 'draw' ? '🤝' : '🏆'}
               </div>
-              <div className={`text-4xl font-black text-white ${matchState.matchWinner === playerId ? 'glow-blue' : matchState.matchWinner === 'draw' ? '' : 'glow-red'}`}>
-                {matchState.matchWinner === playerId ? '🏆 ¡VICTORIA!' : 
-                 matchState.matchWinner === 'draw' ? '🤝 EMPATE' : 'DERROTA'}
+              <div className={`text-3xl font-black text-white uppercase tracking-widest leading-tight ${matchState.matchWinner === playerId ? 'glow-blue' : matchState.matchWinner === 'draw' ? '' : 'glow-red'}`}>
+                {matchState.matchWinner === 'draw' ? 'MATCH EMPATADO' : 
+                 matchState.matchWinner === playerId ? '¡GANASTE EL MATCH!' : 
+                 `${opponent?.name} GANÓ EL MATCH`}
               </div>
             </div>
 
@@ -291,7 +273,7 @@ export const TicTacToe: React.FC<Props> = ({ room, playerId, onLeave }) => {
                 <div className="text-xs font-bold text-slate-500 mb-2 tracking-widest uppercase">{myPlayer?.name}</div>
                 <div className={`text-5xl font-black ${matchState.matchWinner === playerId || matchState.matchWinner === 'draw' ? 'text-white' : 'text-slate-600'}`}>{matchState.score[playerId]}</div>
               </div>
-              <div className="text-2xl text-slate-800 font-black">-</div>
+              <div className="text-2xl text-slate-800 font-black">—</div>
               <div className="text-center">
                 <div className="text-xs font-bold text-slate-500 mb-2 tracking-widest uppercase">{opponent?.name}</div>
                 <div className={`text-5xl font-black ${matchState.matchWinner === opponent?.id || matchState.matchWinner === 'draw' ? 'text-white' : 'text-slate-600'}`}>{opponent ? matchState.score[opponent.id] : 0}</div>
@@ -299,6 +281,9 @@ export const TicTacToe: React.FC<Props> = ({ room, playerId, onLeave }) => {
             </div>
             
             <div className="space-y-4 relative z-10">
+              <div className="text-xs font-black tracking-[0.4em] text-slate-500 mb-6 uppercase">
+                FIN DEL JUEGO
+              </div>
               <button 
                 onClick={handleReady}
                 disabled={iAmReady}
