@@ -56,8 +56,13 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
 
   return (
     <div className="absolute top-4 right-4 z-40 flex flex-col items-end gap-2">
-      {/* Invisible Audio Element */}
-      <audio ref={audioRef} autoPlay playsInline className="hidden" />
+      {/* Invisible Audio Element (using styles instead of display:none to prevent mobile browsers from pausing it) */}
+      <audio 
+        ref={audioRef} 
+        autoPlay 
+        playsInline 
+        style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' }} 
+      />
       
       {/* Autoplay blocked banner */}
       {autoplayBlocked && (

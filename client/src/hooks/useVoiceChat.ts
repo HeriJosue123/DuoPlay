@@ -215,7 +215,9 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       analyserRef.current = analyser;
       analyser.fftSize = 256;
 
-      const source = audioContext.createMediaStreamSource(remoteStream);
+      // Clone the stream to prevent Safari from rerouting and muting the <audio> playback!
+      const clonedStream = remoteStream.clone();
+      const source = audioContext.createMediaStreamSource(clonedStream);
       source.connect(analyser);
 
       const bufferLength = analyser.frequencyBinCount;

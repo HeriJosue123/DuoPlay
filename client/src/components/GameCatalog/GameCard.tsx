@@ -31,6 +31,11 @@ export const GameCard: React.FC<Props> = ({ game, onSelect }) => {
                <span className="text-red-500">O</span>
              </div>
           )}
+          {game.id === 'coming-soon' && (
+             <div className="text-3xl sm:text-5xl font-black text-slate-500 opacity-30">
+               🔒
+             </div>
+          )}
         </div>
 
         {/* Lock Overlay */}

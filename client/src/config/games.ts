@@ -10,17 +10,17 @@ export interface GameConfig {
 export const gamesCatalog: GameConfig[] = [
   {
     id: "tic-tac-toe",
-    name: "TRES EN RAYA",
-    description: "El clásico juego de estrategia de X y O.",
-    image: "/games/tic-tac-toe.webp",
+    name: "EQUIZ CERO",
+    description: "Conocimiento también se juega en duo.",
+    image: "/games/tic-tac-toe.jpg",
     players: 2,
     available: true
   },
   {
-    id: "equiz-cero",
-    name: "EQUIZ CERO",
-    description: "Conocimiento también se juega en duo. ¡Muy pronto!",
-    image: "/games/equiz-cero.jpg",
+    id: "coming-soon",
+    name: "PRÓXIMAMENTE",
+    description: "Nuevos juegos están por llegar.",
+    image: "/games/coming-soon.webp",
     players: 2,
     available: false
   }
