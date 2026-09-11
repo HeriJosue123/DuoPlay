@@ -19,9 +19,10 @@ class SocketManager {
     handleConnection(socket) {
         socket.on('create_room', (data, callback) => {
             const player = {
-                id: socket.id, // Using socket ID as player ID for simplicity, though could generate UUID
+                id: data.playerId,
                 name: data.playerName,
                 socketId: socket.id,
+                connected: true
             };
             const room = this.roomManager.createRoom(player);
             socket.join(room.roomId);
@@ -30,15 +31,16 @@ class SocketManager {
         });
         socket.on('join_room', (data, callback) => {
             const player = {
-                id: socket.id,
+                id: data.playerId,
                 name: data.playerName,
                 socketId: socket.id,
+                connected: true
             };
             const result = this.roomManager.joinRoom(data.roomId.toUpperCase(), player);
             if (result.success && result.room) {
                 socket.join(result.room.roomId);
-                console.log(`Player ${player.name} joined room ${result.room.roomId}`);
-                // Notify others in room
+                console.log(`Player ${player.name} joined/rejoined room ${result.room.roomId}`);
+                // Notify others
                 socket.to(result.room.roomId).emit('player_joined', result.room);
                 callback({ success: true, room: result.room });
             }
@@ -58,14 +60,14 @@ class SocketManager {
         });
         socket.on('make_move', (data, callback) => {
             const room = this.roomManager.getRoom(data.roomId);
-            if (!room)
-                return callback({ success: false, message: 'Room not found' });
-            const result = this.ticTacToe.handleMove(room, socket.id, data.move);
+            if (!room) {
+                if (callback)
+                    callback({ success: false, message: 'Room not found' });
+                return;
+            }
+            const result = this.ticTacToe.handleMove(room, data.playerId, data.move);
             if (result.success) {
                 this.io.to(room.roomId).emit('game_state_updated', room);
-                if (room.status === 'finished') {
-                    this.io.to(room.roomId).emit('game_over', room);
-                }
             }
             else {
                 socket.emit('error', result.message);
@@ -73,28 +75,38 @@ class SocketManager {
             if (callback)
                 callback(result);
         });
-        socket.on('request_rematch', (data, callback) => {
+        socket.on('ready_for_next_round', (data, callback) => {
             const room = this.roomManager.getRoom(data.roomId);
             if (!room)
                 return callback({ success: false, message: 'Room not found' });
-            // We can directly restart for simplicity if someone requests rematch
-            this.ticTacToe.initGame(room);
-            this.io.to(room.roomId).emit('game_started', room);
-            callback({ success: true });
+            const result = this.ticTacToe.handleReady(room, data.playerId);
+            if (result.success) {
+                this.io.to(room.roomId).emit('game_state_updated', room);
+            }
+            if (callback)
+                callback(result);
         });
-        socket.on('leave_room', () => {
-            this.handleDisconnect(socket);
+        socket.on('leave_room', (data) => {
+            const { room, wasDestroyed } = this.roomManager.leaveRoom(data.roomId, data.playerId);
+            if (room && !wasDestroyed) {
+                this.io.to(room.roomId).emit('player_left', room);
+            }
+            socket.leave(data.roomId);
         });
         socket.on('disconnect', () => {
-            this.handleDisconnect(socket);
             console.log('User disconnected:', socket.id);
+            const { room, player } = this.roomManager.handleDisconnect(socket.id, (timeoutRoom, timeoutPlayerId) => {
+                // This runs if they don't reconnect in 10s
+                console.log(`Player ${timeoutPlayerId} permanently left due to timeout`);
+                const { room: updatedRoom, wasDestroyed } = this.roomManager.leaveRoom(timeoutRoom.roomId, timeoutPlayerId);
+                if (updatedRoom && !wasDestroyed) {
+                    this.io.to(timeoutRoom.roomId).emit('player_left', updatedRoom);
+                }
+            });
+            if (room && player) {
+                this.io.to(room.roomId).emit('player_disconnected', room);
+            }
         });
-    }
-    handleDisconnect(socket) {
-        const { room, wasDestroyed } = this.roomManager.removePlayer(socket.id);
-        if (room && !wasDestroyed) {
-            this.io.to(room.roomId).emit('player_left', room);
-        }
     }
 }
 exports.SocketManager = SocketManager;

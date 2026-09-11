@@ -9,54 +9,61 @@ export const RoomView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const { socket } = useSocket();
+  const { socket, playerId } = useSocket();
   const [room, setRoom] = useState<Room | null>(location.state?.room || null);
-  const me = location.state?.me || '';
 
   useEffect(() => {
-    if (!socket || !id) return;
-    
-    // If we don't have room state, we should probably rejoin or redirect
+    if (!socket || !id || !playerId) return;
+
+    // Handle initial state if missing or socket reconnected
     if (!room) {
-      navigate('/');
-      return;
+      const name = localStorage.getItem('duoplay_name');
+      if (name) {
+        socket.emit('join_room', { playerName: name, roomId: id, playerId }, (res: any) => {
+          if (res.success) {
+            setRoom(res.room);
+          } else {
+            navigate('/');
+          }
+        });
+      } else {
+        navigate('/');
+      }
     }
 
-    const handlePlayerJoined = (updatedRoom: Room) => {
-      setRoom(updatedRoom);
-    };
-
+    const handlePlayerJoined = (updatedRoom: Room) => setRoom(updatedRoom);
+    
+    const handlePlayerDisconnected = (updatedRoom: Room) => setRoom(updatedRoom);
+    
     const handlePlayerLeft = (updatedRoom: Room) => {
       setRoom(updatedRoom);
-      alert('El otro jugador se ha desconectado');
+      alert('El otro jugador ha abandonado la sala definitivamente.');
     };
 
-    const handleGameStarted = (updatedRoom: Room) => {
-      setRoom(updatedRoom);
-    };
-
-    const handleGameStateUpdated = (updatedRoom: Room) => {
-      setRoom(updatedRoom);
-    };
-    
-    const handleGameOver = (updatedRoom: Room) => {
-      setRoom(updatedRoom);
-    };
+    const handleGameStarted = (updatedRoom: Room) => setRoom(updatedRoom);
+    const handleGameStateUpdated = (updatedRoom: Room) => setRoom(updatedRoom);
 
     socket.on('player_joined', handlePlayerJoined);
+    socket.on('player_disconnected', handlePlayerDisconnected);
     socket.on('player_left', handlePlayerLeft);
     socket.on('game_started', handleGameStarted);
     socket.on('game_state_updated', handleGameStateUpdated);
-    socket.on('game_over', handleGameOver);
+
+    const handleBeforeUnload = () => {
+      socket.emit('leave_room', { roomId: id, playerId });
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       socket.off('player_joined', handlePlayerJoined);
+      socket.off('player_disconnected', handlePlayerDisconnected);
       socket.off('player_left', handlePlayerLeft);
       socket.off('game_started', handleGameStarted);
       socket.off('game_state_updated', handleGameStateUpdated);
-      socket.off('game_over', handleGameOver);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [socket, id, navigate, room]);
+  }, [socket, id, navigate, room, playerId]);
 
   const copyCode = () => {
     if (id) {
@@ -67,21 +74,34 @@ export const RoomView: React.FC = () => {
 
   const startGame = () => {
     if (socket && id) {
-      socket.emit('start_game', { roomId: id }, (res: any) => {
+      socket.emit('start_game', { roomId: id, playerId }, (res: any) => {
         if (!res.success) alert(res.message);
       });
     }
+  };
+  
+  const leaveRoom = () => {
+    if (socket && id) {
+      socket.emit('leave_room', { roomId: id, playerId });
+    }
+    navigate('/');
   };
 
   if (!room) return null;
 
   if (room.status === 'playing' || room.status === 'finished') {
-    return <TicTacToe room={room} me={me} />;
+    return <TicTacToe room={room} playerId={playerId} onLeave={leaveRoom} />;
   }
 
   // Lobby view
   return (
     <div className="flex flex-col items-center justify-center flex-1 p-6 space-y-8">
+      <div className="w-full flex justify-start -mb-4">
+        <button onClick={leaveRoom} className="text-slate-400 hover:text-white text-sm">
+          ← Salir
+        </button>
+      </div>
+      
       <div className="text-center space-y-2">
         <h2 className="text-sm font-bold text-slate-400 tracking-widest">SALA</h2>
         <div className="flex items-center justify-center gap-4 bg-slate-800/80 px-8 py-4 rounded-2xl border border-slate-700">
@@ -102,7 +122,7 @@ export const RoomView: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between p-4 bg-slate-900 rounded-2xl border border-slate-800">
             <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-green-500" />
+              <div className={`w-3 h-3 rounded-full ${room.players[0]?.connected ? 'bg-green-500' : 'bg-red-500'}`} />
               <span className="font-bold text-lg">{room.players[0]?.name || 'Esperando...'}</span>
             </div>
             <span className="text-xs text-slate-500 font-mono">PLAYER 1</span>
@@ -112,7 +132,11 @@ export const RoomView: React.FC = () => {
 
           <div className="flex items-center justify-between p-4 bg-slate-900 rounded-2xl border border-slate-800">
             <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${room.players[1] ? 'bg-purple-500' : 'bg-yellow-500 animate-pulse'}`} />
+              {room.players[1] ? (
+                 <div className={`w-3 h-3 rounded-full ${room.players[1].connected ? 'bg-green-500' : 'bg-red-500'}`} />
+              ) : (
+                 <div className="w-3 h-3 rounded-full bg-yellow-500 animate-pulse" />
+              )}
               <span className="font-bold text-lg text-slate-300">
                 {room.players[1]?.name || 'Esperando al segundo jugador...'}
               </span>
@@ -121,7 +145,7 @@ export const RoomView: React.FC = () => {
           </div>
         </div>
 
-        {room.players.length === 2 && room.players[0].name === me && (
+        {room.players.length === 2 && room.players[0].id === playerId && (
           <div className="pt-4 border-t border-slate-700">
             <p className="text-center text-sm text-slate-400 mb-4">ELIGE UN JUEGO</p>
             <button 
@@ -132,7 +156,7 @@ export const RoomView: React.FC = () => {
             </button>
           </div>
         )}
-        {room.players.length === 2 && room.players[0].name !== me && (
+        {room.players.length === 2 && room.players[0].id !== playerId && (
            <div className="pt-4 border-t border-slate-700">
             <p className="text-center text-sm text-slate-400">Esperando que el líder inicie el juego...</p>
            </div>

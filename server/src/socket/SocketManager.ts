@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { RoomManager } from '../rooms/RoomManager';
 import { TicTacToe } from '../games/TicTacToe';
-import { Player } from '../types';
+import type { Player } from '../types';
 
 export class SocketManager {
   private io: Server;
@@ -20,11 +20,12 @@ export class SocketManager {
   }
 
   private handleConnection(socket: Socket) {
-    socket.on('create_room', (data: { playerName: string }, callback) => {
+    socket.on('create_room', (data: { playerName: string, playerId: string }, callback) => {
       const player: Player = {
-        id: socket.id, // Using socket ID as player ID for simplicity, though could generate UUID
+        id: data.playerId,
         name: data.playerName,
         socketId: socket.id,
+        connected: true
       };
       const room = this.roomManager.createRoom(player);
       socket.join(room.roomId);
@@ -32,20 +33,21 @@ export class SocketManager {
       callback({ success: true, room });
     });
 
-    socket.on('join_room', (data: { playerName: string, roomId: string }, callback) => {
+    socket.on('join_room', (data: { playerName: string, roomId: string, playerId: string }, callback) => {
       const player: Player = {
-        id: socket.id,
+        id: data.playerId,
         name: data.playerName,
         socketId: socket.id,
+        connected: true
       };
       
       const result = this.roomManager.joinRoom(data.roomId.toUpperCase(), player);
       
       if (result.success && result.room) {
         socket.join(result.room.roomId);
-        console.log(`Player ${player.name} joined room ${result.room.roomId}`);
+        console.log(`Player ${player.name} joined/rejoined room ${result.room.roomId}`);
         
-        // Notify others in room
+        // Notify others
         socket.to(result.room.roomId).emit('player_joined', result.room);
         
         callback({ success: true, room: result.room });
@@ -54,7 +56,7 @@ export class SocketManager {
       }
     });
 
-    socket.on('start_game', (data: { roomId: string }, callback) => {
+    socket.on('start_game', (data: { roomId: string, playerId: string }, callback) => {
       const room = this.roomManager.getRoom(data.roomId);
       if (!room) return callback({ success: false, message: 'Room not found' });
       if (room.players.length !== 2) return callback({ success: false, message: 'Need 2 players to start' });
@@ -64,46 +66,56 @@ export class SocketManager {
       callback({ success: true });
     });
 
-    socket.on('make_move', (data: { roomId: string, move: any }, callback) => {
+    socket.on('make_move', (data: { roomId: string, playerId: string, move: any }, callback) => {
       const room = this.roomManager.getRoom(data.roomId);
-      if (!room) return callback({ success: false, message: 'Room not found' });
+      if (!room) {
+        if (callback) callback({ success: false, message: 'Room not found' });
+        return;
+      }
 
-      const result = this.ticTacToe.handleMove(room, socket.id, data.move);
+      const result = this.ticTacToe.handleMove(room, data.playerId, data.move);
       if (result.success) {
         this.io.to(room.roomId).emit('game_state_updated', room);
-        if (room.status === 'finished') {
-          this.io.to(room.roomId).emit('game_over', room);
-        }
       } else {
         socket.emit('error', result.message);
       }
       if (callback) callback(result);
     });
 
-    socket.on('request_rematch', (data: { roomId: string }, callback) => {
+    socket.on('ready_for_next_round', (data: { roomId: string, playerId: string }, callback) => {
       const room = this.roomManager.getRoom(data.roomId);
       if (!room) return callback({ success: false, message: 'Room not found' });
-      
-      // We can directly restart for simplicity if someone requests rematch
-      this.ticTacToe.initGame(room);
-      this.io.to(room.roomId).emit('game_started', room);
-      callback({ success: true });
+
+      const result = this.ticTacToe.handleReady(room, data.playerId);
+      if (result.success) {
+        this.io.to(room.roomId).emit('game_state_updated', room);
+      }
+      if (callback) callback(result);
     });
     
-    socket.on('leave_room', () => {
-      this.handleDisconnect(socket);
+    socket.on('leave_room', (data: { roomId: string, playerId: string }) => {
+      const { room, wasDestroyed } = this.roomManager.leaveRoom(data.roomId, data.playerId);
+      if (room && !wasDestroyed) {
+        this.io.to(room.roomId).emit('player_left', room);
+      }
+      socket.leave(data.roomId);
     });
 
     socket.on('disconnect', () => {
-      this.handleDisconnect(socket);
       console.log('User disconnected:', socket.id);
-    });
-  }
+      
+      const { room, player } = this.roomManager.handleDisconnect(socket.id, (timeoutRoom, timeoutPlayerId) => {
+        // This runs if they don't reconnect in 10s
+        console.log(`Player ${timeoutPlayerId} permanently left due to timeout`);
+        const { room: updatedRoom, wasDestroyed } = this.roomManager.leaveRoom(timeoutRoom.roomId, timeoutPlayerId);
+        if (updatedRoom && !wasDestroyed) {
+          this.io.to(timeoutRoom.roomId).emit('player_left', updatedRoom);
+        }
+      });
 
-  private handleDisconnect(socket: Socket) {
-    const { room, wasDestroyed } = this.roomManager.removePlayer(socket.id);
-    if (room && !wasDestroyed) {
-      this.io.to(room.roomId).emit('player_left', room);
-    }
+      if (room && player) {
+        this.io.to(room.roomId).emit('player_disconnected', room);
+      }
+    });
   }
 }

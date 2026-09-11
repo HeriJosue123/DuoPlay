@@ -4,20 +4,22 @@ import { useSocket } from '../context/SocketContext';
 import { Gamepad2, Users } from 'lucide-react';
 
 export const Home: React.FC = () => {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(localStorage.getItem('duoplay_name') || '');
   const [roomCode, setRoomCode] = useState('');
   const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu');
   const [error, setError] = useState('');
-  const { socket, isConnected } = useSocket();
+  const { socket, isConnected, playerId } = useSocket();
   const navigate = useNavigate();
 
   const handleCreate = () => {
     if (!name.trim()) return setError('Ingresa tu nombre');
     if (!socket) return setError('Sin conexión al servidor');
     
-    socket.emit('create_room', { playerName: name }, (response: any) => {
+    localStorage.setItem('duoplay_name', name);
+
+    socket.emit('create_room', { playerName: name, playerId }, (response: any) => {
       if (response.success) {
-        navigate(`/room/${response.room.roomId}`, { state: { room: response.room, me: name } });
+        navigate(`/room/${response.room.roomId}`, { state: { room: response.room } });
       } else {
         setError(response.message || 'Error al crear sala');
       }
@@ -29,9 +31,11 @@ export const Home: React.FC = () => {
     if (roomCode.length !== 6) return setError('Código debe tener 6 caracteres');
     if (!socket) return setError('Sin conexión al servidor');
 
-    socket.emit('join_room', { playerName: name, roomId: roomCode }, (response: any) => {
+    localStorage.setItem('duoplay_name', name);
+
+    socket.emit('join_room', { playerName: name, roomId: roomCode, playerId }, (response: any) => {
       if (response.success) {
-        navigate(`/room/${response.room.roomId}`, { state: { room: response.room, me: name } });
+        navigate(`/room/${response.room.roomId}`, { state: { room: response.room } });
       } else {
         setError(response.message || 'Error al unirse');
       }

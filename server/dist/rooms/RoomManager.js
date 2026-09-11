@@ -3,55 +3,98 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoomManager = void 0;
 class RoomManager {
     rooms = new Map();
+    disconnectTimers = new Map();
     createRoom(player) {
         const roomId = this.generateRoomId();
+        player.connected = true;
         const room = {
             roomId,
             players: [player],
-            selectedGame: 'tic-tac-toe', // default for now
+            selectedGame: 'tic-tac-toe',
             status: 'waiting',
+            matchState: null,
             gameState: null,
             currentTurn: null,
-            winner: null,
         };
         this.rooms.set(roomId, room);
         return room;
     }
     joinRoom(roomId, player) {
         const room = this.rooms.get(roomId);
-        if (!room) {
+        if (!room)
             return { success: false, message: 'Room does not exist' };
+        // Check if player is already in room (reconnection)
+        const existingPlayer = room.players.find(p => p.id === player.id);
+        if (existingPlayer) {
+            existingPlayer.socketId = player.socketId;
+            existingPlayer.connected = true;
+            existingPlayer.name = player.name;
+            this.clearDisconnectTimer(existingPlayer.id);
+            return { success: true, room };
         }
         if (room.players.length >= 2) {
             return { success: false, message: 'Room is full' };
         }
+        player.connected = true;
         room.players.push(player);
         return { success: true, room };
     }
     getRoom(roomId) {
         return this.rooms.get(roomId);
     }
-    getRoomBySocketId(socketId) {
+    getRoomByPlayerId(playerId) {
         for (const room of this.rooms.values()) {
-            if (room.players.some(p => p.socketId === socketId)) {
+            if (room.players.some(p => p.id === playerId))
                 return room;
-            }
         }
         return undefined;
     }
-    removePlayer(socketId) {
-        for (const [roomId, room] of this.rooms.entries()) {
-            const playerIndex = room.players.findIndex(p => p.socketId === socketId);
-            if (playerIndex !== -1) {
-                room.players.splice(playerIndex, 1);
-                if (room.players.length === 0) {
-                    this.rooms.delete(roomId);
-                    return { room, wasDestroyed: true };
-                }
-                return { room, wasDestroyed: false };
+    getRoomBySocketId(socketId) {
+        for (const room of this.rooms.values()) {
+            if (room.players.some(p => p.socketId === socketId))
+                return room;
+        }
+        return undefined;
+    }
+    getPlayerBySocketId(socketId) {
+        const room = this.getRoomBySocketId(socketId);
+        return room?.players.find(p => p.socketId === socketId);
+    }
+    leaveRoom(roomId, playerId) {
+        const room = this.rooms.get(roomId);
+        if (!room)
+            return { wasDestroyed: false };
+        this.clearDisconnectTimer(playerId);
+        const playerIndex = room.players.findIndex(p => p.id === playerId);
+        if (playerIndex !== -1) {
+            room.players.splice(playerIndex, 1);
+            if (room.players.length === 0) {
+                this.rooms.delete(roomId);
+                return { room, wasDestroyed: true };
             }
+            return { room, wasDestroyed: false };
         }
         return { wasDestroyed: false };
+    }
+    handleDisconnect(socketId, onTimeout) {
+        const room = this.getRoomBySocketId(socketId);
+        const player = room?.players.find(p => p.socketId === socketId);
+        if (room && player) {
+            player.connected = false;
+            const timer = setTimeout(() => {
+                onTimeout(room, player.id);
+            }, 10000); // 10 seconds to reconnect
+            this.disconnectTimers.set(player.id, timer);
+            return { room, player };
+        }
+        return {};
+    }
+    clearDisconnectTimer(playerId) {
+        const timer = this.disconnectTimers.get(playerId);
+        if (timer) {
+            clearTimeout(timer);
+            this.disconnectTimers.delete(playerId);
+        }
     }
     generateRoomId() {
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -59,7 +102,6 @@ class RoomManager {
         for (let i = 0; i < 6; i++) {
             result += characters.charAt(Math.floor(Math.random() * characters.length));
         }
-        // ensure unique
         if (this.rooms.has(result))
             return this.generateRoomId();
         return result;

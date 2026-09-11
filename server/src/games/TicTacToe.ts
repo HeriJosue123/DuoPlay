@@ -1,51 +1,91 @@
-import { GameEngine } from './GameEngine';
-import { Room } from '../types';
+import type { GameEngine } from './GameEngine';
+import type { Room, PlayerSymbol } from '../types';
 
 export class TicTacToe implements GameEngine {
   initGame(room: Room): void {
-    room.gameState = {
-      board: Array(9).fill(null),
+    const p1 = room.players[0].id;
+    const p2 = room.players[1].id;
+
+    // Randomly assign initial symbols
+    const p1Symbol = Math.random() > 0.5 ? 'X' : 'O';
+    const p2Symbol = p1Symbol === 'X' ? 'O' : 'X';
+
+    room.matchState = {
+      round: 1,
+      score: {
+        [p1]: 0,
+        [p2]: 0
+      },
+      targetScore: 5,
+      symbolAssignments: {
+        [p1]: p1Symbol,
+        [p2]: p2Symbol
+      },
+      roundWinner: null,
+      matchWinner: null,
+      status: 'playing',
+      readyPlayers: []
     };
+
     room.status = 'playing';
-    room.winner = null;
-    
-    // Randomly pick who starts
-    const startingPlayer = room.players[Math.floor(Math.random() * 2)];
-    room.currentTurn = startingPlayer.id;
+    this.initRound(room);
   }
 
-  handleMove(room: Room, playerSocketId: string, move: any): { success: boolean, message?: string } {
-    if (room.status !== 'playing') {
+  private initRound(room: Room): void {
+    if (!room.matchState) return;
+
+    room.gameState = {
+      board: Array(9).fill(null),
+      winningLine: null
+    };
+
+    room.matchState.status = 'playing';
+    room.matchState.roundWinner = null;
+    room.matchState.readyPlayers = [];
+
+    // The player with 'X' always starts
+    const startingPlayerId = Object.keys(room.matchState.symbolAssignments).find(
+      id => room.matchState!.symbolAssignments[id] === 'X'
+    );
+    
+    room.currentTurn = startingPlayerId || room.players[0].id;
+  }
+
+  handleMove(room: Room, playerId: string, move: { index: number }): { success: boolean, message?: string } {
+    if (room.status !== 'playing' || !room.matchState || room.matchState.status !== 'playing') {
       return { success: false, message: 'Game is not in playing state.' };
     }
 
-    const player = room.players.find(p => p.socketId === playerSocketId);
-    if (!player) return { success: false, message: 'Player not found.' };
-
-    if (room.currentTurn !== player.id) {
+    if (room.currentTurn !== playerId) {
       return { success: false, message: 'Not your turn.' };
     }
 
     const { index } = move;
-    if (index < 0 || index > 8 || room.gameState.board[index] !== null) {
+    if (index < 0 || index > 8 || !room.gameState || room.gameState.board[index] !== null) {
       return { success: false, message: 'Invalid move.' };
     }
 
-    const playerSymbol = room.players[0].id === player.id ? 'X' : 'O';
+    const playerSymbol = room.matchState.symbolAssignments[playerId];
     room.gameState.board[index] = playerSymbol;
 
     this.checkGameOver(room);
 
-    if (room.status === 'playing') {
+    if (room.matchState.status === 'playing') {
       // Switch turn
-      const nextPlayer = room.players.find(p => p.id !== player.id);
-      room.currentTurn = nextPlayer!.id;
+      const nextPlayer = room.players.find(p => p.id !== playerId);
+      if (nextPlayer) {
+        room.currentTurn = nextPlayer.id;
+      }
+    } else {
+      room.currentTurn = null; // round over
     }
 
     return { success: true };
   }
 
   checkGameOver(room: Room): void {
+    if (!room.gameState || !room.matchState) return;
+
     const board = room.gameState.board;
     const winningCombinations = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
@@ -53,26 +93,74 @@ export class TicTacToe implements GameEngine {
       [0, 4, 8], [2, 4, 6]             // Diagonals
     ];
 
+    let winnerSymbol: PlayerSymbol | null = null;
+    let winLine: number[] | null = null;
+
     for (const combo of winningCombinations) {
       const [a, b, c] = combo;
       if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-        room.status = 'finished';
-        // board[a] is 'X' or 'O'
-        const winnerPlayer = room.players[0].id === (room.players[0].id === room.players[0].id && board[a] === 'X' ? room.players[0].id : (board[a] === 'O' ? room.players[1].id : room.players[0].id));
-        // let's simplify winner detection
-        const symbolXPlayer = room.players[0];
-        const symbolOPlayer = room.players[1];
-        
-        if (board[a] === 'X') room.winner = symbolXPlayer.id;
-        else room.winner = symbolOPlayer.id;
-        
-        return;
+        winnerSymbol = board[a] as PlayerSymbol;
+        winLine = combo;
+        break;
       }
     }
 
-    if (!board.includes(null)) {
-      room.status = 'finished';
-      room.winner = 'draw';
+    if (winnerSymbol) {
+      room.gameState.winningLine = winLine;
+      room.matchState.status = 'round_finished';
+      
+      const winnerId = Object.keys(room.matchState.symbolAssignments).find(
+        id => room.matchState!.symbolAssignments[id] === winnerSymbol
+      );
+
+      if (winnerId) {
+        room.matchState.roundWinner = winnerId;
+        room.matchState.score[winnerId] += 1;
+
+        if (room.matchState.score[winnerId] >= room.matchState.targetScore) {
+          room.matchState.status = 'match_finished';
+          room.matchState.matchWinner = winnerId;
+        }
+      }
+      return;
     }
+
+    if (!board.includes(null)) {
+      room.matchState.status = 'round_finished';
+      room.matchState.roundWinner = 'draw';
+    }
+  }
+
+  handleReady(room: Room, playerId: string): { success: boolean, message?: string } {
+    if (!room.matchState) return { success: false, message: 'Match not initialized.' };
+    
+    if (room.matchState.status === 'playing') {
+      return { success: false, message: 'Round is still playing.' };
+    }
+
+    if (!room.matchState.readyPlayers.includes(playerId)) {
+      room.matchState.readyPlayers.push(playerId);
+    }
+
+    if (room.matchState.readyPlayers.length === 2) {
+      if (room.matchState.status === 'match_finished') {
+        // Rematch: completely restart
+        this.initGame(room);
+      } else if (room.matchState.status === 'round_finished') {
+        // Next round: alternate symbols
+        room.matchState.round += 1;
+        const p1 = room.players[0].id;
+        const p2 = room.players[1].id;
+        
+        // Swap symbols
+        const currentP1Symbol = room.matchState.symbolAssignments[p1];
+        room.matchState.symbolAssignments[p1] = room.matchState.symbolAssignments[p2];
+        room.matchState.symbolAssignments[p2] = currentP1Symbol;
+
+        this.initRound(room);
+      }
+    }
+
+    return { success: true };
   }
 }
