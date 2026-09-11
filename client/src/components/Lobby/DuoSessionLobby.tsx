@@ -10,11 +10,11 @@ export const DuoSessionLobby = ({ room }: { room: Room }) => {
   const p2 = room.players[1];
 
   const handlePropose = (gameId: 'tic-tac-toe' | 'memory-match') => {
-    socket?.emit('propose_game', { roomId: room.roomId, playerId, gameId });
+    socket?.emit('propose_game', { roomId: room.roomId, playerId, gameId }, (res) => { if (!res || !res.success) alert('Server Error: ' + (res ? res.message : 'No response')); });
   };
 
   const handleAccept = () => {
-    socket?.emit('accept_game', { roomId: room.roomId, playerId });
+    socket?.emit('accept_game', { roomId: room.roomId, playerId }, (res) => { if (!res || !res.success) alert('Server Error: ' + (res ? res.message : 'No response')); });
   };
 
   const handleCancel = () => {
