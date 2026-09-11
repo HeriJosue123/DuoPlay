@@ -62,12 +62,12 @@ export const ChatBox = ({ room }: { room: Room }) => {
       <div className={`fixed inset-0 z-50 pointer-events-none ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
         {/* Backdrop for mobile */}
         <div 
-          className={`absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'} sm:hidden`}
+          className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'} sm:hidden`}
           onClick={() => setIsOpen(false)}
         />
         
         {/* Panel */}
-        <div className={`absolute bottom-0 sm:bottom-6 sm:right-6 w-full sm:w-80 h-[60vh] sm:h-[500px] panel-dark border-t sm:border border-[#333] sm:rounded-2xl shadow-2xl flex flex-col pointer-events-auto transition-transform duration-300 ${isOpen ? 'translate-y-0' : 'translate-y-full sm:translate-y-12 sm:scale-95'}`}>
+        <div className={`absolute bottom-0 sm:bottom-6 sm:right-6 w-full sm:w-80 h-[60vh] sm:h-[500px] panel-dark border-t sm:border border-[#333] sm:rounded-2xl shadow-2xl flex flex-col transition-transform duration-300 ${isOpen ? 'translate-y-0 pointer-events-auto' : 'translate-y-full sm:translate-y-12 sm:scale-95 pointer-events-none'}`}>
           {/* Header */}
           <div className="flex justify-between items-center p-4 border-b border-[#333] bg-[#111] sm:rounded-t-2xl">
             <h3 className="font-black text-white tracking-widest text-sm flex items-center gap-2">
