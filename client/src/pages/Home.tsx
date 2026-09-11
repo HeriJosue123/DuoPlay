@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
-import { Gamepad2, Users } from 'lucide-react';
+import { Gamepad2, Users, ArrowLeft } from 'lucide-react';
+import { gamesCatalog } from '../config/games';
+import { GameCard } from '../components/GameCatalog/GameCard';
 
 export const Home: React.FC = () => {
+  const [mode, setMode] = useState<'catalog' | 'menu' | 'create' | 'join'>('catalog');
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
-  const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu');
   const [error, setError] = useState('');
   const [reconnecting, setReconnecting] = useState(false);
   const [totalRounds, setTotalRounds] = useState(5);
@@ -16,7 +19,7 @@ export const Home: React.FC = () => {
 
   useEffect(() => {
     const savedRoomId = localStorage.getItem('duoplay_roomId');
-    if (savedRoomId && socket && isConnected && !reconnecting && mode === 'menu') {
+    if (savedRoomId && socket && isConnected && !reconnecting && (mode === 'catalog' || mode === 'menu')) {
       setReconnecting(true);
       // El nombre enviado aquí será ignorado por el servidor si es una reconexión exitosa, 
       // ya que el servidor recupera el nombre original asociado al playerId.
@@ -37,7 +40,8 @@ export const Home: React.FC = () => {
     if (!name.trim()) return setError('Ingresa tu nombre');
     if (!socket) return setError('Sin conexión al servidor');
 
-    socket.emit('create_room', { playerName: name, playerId, totalRounds }, (response: any) => {
+    // Mantenemos totalRounds por defecto, y luego el backend usa 'tic-tac-toe' automáticamente.
+    socket.emit('create_room', { playerName: name, playerId, totalRounds, gameId: selectedGameId }, (response: any) => {
       if (response.success) {
         localStorage.setItem('duoplay_roomId', response.room.roomId);
         navigate(`/room/${response.room.roomId}`, { state: { room: response.room } });
@@ -71,14 +75,59 @@ export const Home: React.FC = () => {
     );
   }
 
-  if (mode === 'menu') {
+  if (mode === 'catalog') {
     return (
-      <div className="flex flex-col items-center justify-center flex-1 p-6 space-y-12 w-full max-w-sm mx-auto">
-        <div className="text-center space-y-2">
+      <div className="flex flex-col flex-1 p-6 w-full max-w-5xl mx-auto overflow-y-auto">
+        <div className="text-center space-y-2 mb-10 mt-6">
           <h1 className="text-5xl font-black tracking-tight text-white glow-blue">
             DUO PLAY
           </h1>
           <p className="text-slate-500 text-xs tracking-[0.3em] uppercase">Dos teléfonos. Una partida.</p>
+        </div>
+        
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-sm font-black text-white tracking-[0.3em] uppercase">
+            JUEGOS
+          </h2>
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-600 tracking-widest">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-red-500 shadow-[0_0_10px_#ef4444]'}`} />
+            {isConnected ? 'CONECTADO' : 'OFFLINE'}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {gamesCatalog.map(game => (
+            <GameCard 
+              key={game.id} 
+              game={game} 
+              onSelect={(id) => {
+                setSelectedGameId(id);
+                setMode('menu');
+              }} 
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'menu') {
+    return (
+      <div className="flex flex-col items-center justify-center flex-1 p-6 w-full max-w-sm mx-auto">
+        <div className="w-full flex justify-start mb-8">
+          <button 
+            onClick={() => { setSelectedGameId(null); setMode('catalog'); }}
+            className="text-slate-500 hover:text-white text-xs font-bold tracking-widest uppercase transition-colors flex items-center gap-2"
+          >
+            <ArrowLeft size={16} /> CATÁLOGO
+          </button>
+        </div>
+
+        <div className="text-center space-y-2 mb-12">
+          <h2 className="text-3xl font-black tracking-widest text-white glow-blue uppercase">
+            {gamesCatalog.find(g => g.id === selectedGameId)?.name || 'SALA'}
+          </h2>
+          <p className="text-slate-500 text-xs tracking-[0.3em] uppercase">Elige cómo jugar</p>
         </div>
 
         <div className="w-full space-y-4">
@@ -96,11 +145,6 @@ export const Home: React.FC = () => {
             <Users size={24} />
             UNIRSE A PARTIDA
           </button>
-        </div>
-
-        <div className="absolute bottom-8 flex items-center gap-2 text-xs font-bold text-slate-600 tracking-widest">
-          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-red-500 shadow-[0_0_10px_#ef4444]'}`} />
-          {isConnected ? 'CONECTADO' : 'CONECTANDO...'}
         </div>
       </div>
     );
