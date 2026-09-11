@@ -4,7 +4,7 @@ import { useSocket } from '../context/SocketContext';
 import { Gamepad2, Users } from 'lucide-react';
 
 export const Home: React.FC = () => {
-  const [name, setName] = useState(localStorage.getItem('duoplay_name') || '');
+  const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu');
   const [error, setError] = useState('');
@@ -18,7 +18,9 @@ export const Home: React.FC = () => {
     const savedRoomId = localStorage.getItem('duoplay_roomId');
     if (savedRoomId && socket && isConnected && !reconnecting && mode === 'menu') {
       setReconnecting(true);
-      const savedName = localStorage.getItem('duoplay_name') || 'Jugador';
+      // El nombre enviado aquí será ignorado por el servidor si es una reconexión exitosa, 
+      // ya que el servidor recupera el nombre original asociado al playerId.
+      const savedName = 'Jugador';
       
       socket.emit('join_room', { playerName: savedName, roomId: savedRoomId, playerId }, (response: any) => {
         if (response.success) {
@@ -34,8 +36,6 @@ export const Home: React.FC = () => {
   const handleCreate = () => {
     if (!name.trim()) return setError('Ingresa tu nombre');
     if (!socket) return setError('Sin conexión al servidor');
-    
-    localStorage.setItem('duoplay_name', name);
 
     socket.emit('create_room', { playerName: name, playerId, totalRounds }, (response: any) => {
       if (response.success) {
@@ -51,8 +51,6 @@ export const Home: React.FC = () => {
     if (!name.trim()) return setError('Ingresa tu nombre');
     if (roomCode.length !== 6) return setError('Código debe tener 6 caracteres');
     if (!socket) return setError('Sin conexión al servidor');
-
-    localStorage.setItem('duoplay_name', name);
 
     socket.emit('join_room', { playerName: name, roomId: roomCode, playerId }, (response: any) => {
       if (response.success) {
@@ -85,14 +83,14 @@ export const Home: React.FC = () => {
 
         <div className="w-full space-y-4">
           <button 
-            onClick={() => setMode('create')}
+            onClick={() => { setName(''); setTotalRounds(5); setRoomCode(''); setError(''); setMode('create'); }}
             className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-200 text-black font-black py-4 px-6 rounded-2xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
           >
             <Gamepad2 size={24} />
             CREAR PARTIDA
           </button>
           <button 
-            onClick={() => setMode('join')}
+            onClick={() => { setName(''); setTotalRounds(5); setRoomCode(''); setError(''); setMode('join'); }}
             className="w-full flex items-center justify-center gap-3 panel-dark hover:bg-[#111] text-white font-black py-4 px-6 rounded-2xl transition-transform active:scale-95"
           >
             <Users size={24} />
@@ -112,7 +110,7 @@ export const Home: React.FC = () => {
     <div className="flex flex-col items-center justify-center flex-1 p-6 w-full max-w-sm mx-auto overflow-y-auto">
       <div className="w-full p-8 panel-dark rounded-3xl space-y-8 my-auto">
         <button 
-          onClick={() => { setMode('menu'); setError(''); }}
+          onClick={() => { setName(''); setTotalRounds(5); setRoomCode(''); setError(''); setMode('menu'); }}
           className="text-slate-500 hover:text-white text-xs font-bold tracking-widest uppercase transition-colors"
         >
           ← Volver
@@ -130,6 +128,7 @@ export const Home: React.FC = () => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ej. Alex"
+              autoComplete="off"
               className="w-full panel-dark border-[#333] focus:border-white rounded-xl px-4 py-4 text-white text-lg font-bold placeholder:text-slate-700 focus:outline-none transition-colors"
             />
           </div>
@@ -143,6 +142,7 @@ export const Home: React.FC = () => {
                 onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                 maxLength={6}
                 placeholder="000000"
+                autoComplete="off"
                 className="w-full panel-dark border-[#333] focus:border-white rounded-xl px-4 py-4 text-white font-mono text-center text-2xl tracking-[0.3em] font-black placeholder:text-slate-800 focus:outline-none transition-colors"
               />
             </div>
