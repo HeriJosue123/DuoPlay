@@ -94,6 +94,17 @@ class SocketManager {
             }
             socket.leave(data.roomId);
         });
+        socket.on('webrtc_signal', (data) => {
+            // Validate that room and player exist before broadcasting
+            const room = this.roomManager.getRoom(data.roomId);
+            if (room && room.players.some(p => p.id === data.playerId)) {
+                // Broadcast the signal to the other player in the room
+                socket.to(data.roomId).emit('webrtc_signal', {
+                    playerId: data.playerId,
+                    signal: data.signal
+                });
+            }
+        });
         socket.on('disconnect', () => {
             console.log('User disconnected:', socket.id);
             const { room, player } = this.roomManager.handleDisconnect(socket.id, (timeoutRoom, timeoutPlayerId) => {

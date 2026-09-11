@@ -1,19 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
-import type { Room } from '../types';
 import { TicTacToe } from '../games/TicTacToe/TicTacToe';
+import { RoomVoice } from '../components/RoomVoice/RoomVoice';
 import { Copy } from 'lucide-react';
+import type { Room } from '../types';
 
 export const RoomView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
-  const navigate = useNavigate();
   const { socket, playerId } = useSocket();
+  const navigate = useNavigate();
+  
   const [room, setRoom] = useState<Room | null>(location.state?.room || null);
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [playerAbandoned, setPlayerAbandoned] = useState(false);
-  const isLeaving = React.useRef(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const isLeaving = useRef(false);
 
   useEffect(() => {
     // Si no hay sala en el estado (ej. recargó la página directamente en /room/:id)
@@ -86,6 +88,8 @@ export const RoomView: React.FC = () => {
 
   return (
     <>
+      <RoomVoice room={room} />
+      
       {/* Floating Exit Button */}
       <button
         onClick={() => setShowExitConfirm(true)}

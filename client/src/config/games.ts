@@ -17,10 +17,10 @@ export const gamesCatalog: GameConfig[] = [
     available: true
   },
   {
-    id: "coming-soon",
-    name: "PRÓXIMAMENTE",
-    description: "Nuevos juegos están por llegar.",
-    image: "/games/coming-soon.webp",
+    id: "equiz-cero",
+    name: "EQUIZ CERO",
+    description: "Conocimiento también se juega en duo. ¡Muy pronto!",
+    image: "/games/equiz-cero.jpg",
     players: 2,
     available: false
   }
