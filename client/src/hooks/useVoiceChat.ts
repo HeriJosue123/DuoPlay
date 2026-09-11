@@ -43,10 +43,10 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       console.log('[VOICE] OFFER CREATED and LocalDescription set');
       
       if (socket) {
-        socket.emit('webrtc_signal', {
+        socket.emit('webrtc_offer', {
           roomId,
-          playerId,
-          signal: { type: 'offer', offer }
+          from: playerId,
+          sdp: offer.sdp
         });
         console.log('[VOICE] OFFER SENT');
       }
@@ -95,12 +95,11 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       stream.getTracks().forEach(track => {
         pc.addTrack(track, stream);
       });
-      console.log('[VOICE] Local tracks added to PeerConnection');
 
-      // Handle incoming tracks (Safari fallback for missing streams array)
+      // Listen for remote tracks
       pc.ontrack = (event) => {
-        console.log('[VOICE] ONTRACK event received');
-        if (event.streams && event.streams.length > 0) {
+        console.log('[VOICE] ONTRACK EVENT FIRED');
+        if (event.streams && event.streams[0]) {
           setRemoteStream(event.streams[0]);
         } else {
           setRemoteStream(new MediaStream([event.track]));
@@ -111,10 +110,10 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       pc.onicecandidate = (event) => {
         if (event.candidate && socket) {
           console.log('[VOICE] ICE CANDIDATE SENT');
-          socket.emit('webrtc_signal', {
+          socket.emit('webrtc_ice_candidate', {
             roomId,
-            playerId,
-            signal: { type: 'ice-candidate', candidate: event.candidate }
+            from: playerId,
+            candidate: event.candidate
           });
         }
       };
@@ -139,10 +138,9 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       // Instead of shooting the offer blindly, P2 tells P1 it is ready to receive
       if (!isInitiator && socket) {
         console.log('[VOICE] ready_for_offer SENT');
-        socket.emit('webrtc_signal', {
+        socket.emit('ready_for_offer', {
           roomId,
-          playerId,
-          signal: { type: 'ready_for_offer' }
+          from: playerId
         });
       } else if (isInitiator) {
         attemptSendOffer();
@@ -152,7 +150,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       console.error('[VOICE] Error accessing microphone:', err);
       setVoiceState('no-permission');
     }
-  }, [roomId, playerId, socket, isInitiator, attemptSendOffer]);
+  }, [roomId, playerId, socket, isInitiator, attemptSendOffer, isActive]);
 
   // Clean up WebRTC
   const cleanupWebRTC = useCallback(() => {
@@ -190,83 +188,90 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
   useEffect(() => {
     if (!socket) return;
 
-    const handleSignal = async (data: { playerId: string, signal: any }) => {
-      // Ignore our own signals
-      if (data.playerId === playerId) return;
-      
-      const { signal } = data;
-      console.log(`[VOICE] Received signal type: ${signal.type}`);
-      
-      try {
-        if (signal.type === 'ready_for_offer' && isInitiator) {
-          console.log('[VOICE] ready_for_offer RECEIVED');
-          p2ReadyForOfferRef.current = true;
-          attemptSendOffer();
-        } 
-        else if (signal.type === 'offer') {
-          console.log('[VOICE] OFFER RECEIVED');
-          const pc = pcRef.current;
-          if (!pc) {
-            console.error('[VOICE] ERROR: Received offer but PeerConnection is null! (Should not happen anymore)');
-            return;
-          }
-          await pc.setRemoteDescription(new RTCSessionDescription(signal.offer));
-          console.log('[VOICE] REMOTE DESCRIPTION SET (Offer)');
-          
-          // Drain any queued ICE candidates that arrived before the offer
-          while (iceCandidateQueue.current.length > 0) {
-            const candidate = iceCandidateQueue.current.shift();
-            if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
-          }
-
-          console.log('[VOICE] ANSWER CREATED (creating...)');
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          console.log('[VOICE] ANSWER CREATED and LocalDescription set');
-          
-          socket.emit('webrtc_signal', {
-            roomId,
-            playerId,
-            signal: { type: 'answer', answer }
-          });
-          console.log('[VOICE] ANSWER SENT');
-        } 
-        else if (signal.type === 'answer') {
-          console.log('[VOICE] ANSWER RECEIVED');
-          const pc = pcRef.current;
-          if (!pc) return;
-          await pc.setRemoteDescription(new RTCSessionDescription(signal.answer));
-          console.log('[VOICE] REMOTE DESCRIPTION SET (Answer)');
-          
-          // Drain any queued ICE candidates that arrived before the answer
-          while (iceCandidateQueue.current.length > 0) {
-            const candidate = iceCandidateQueue.current.shift();
-            if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
-          }
-        } 
-        else if (signal.type === 'ice-candidate') {
-          console.log('[VOICE] ICE CANDIDATE RECEIVED');
-          const pc = pcRef.current;
-          if (!pc) {
-            // Queue it anyway, it will be drained later when offer/answer arrives
-            iceCandidateQueue.current.push(signal.candidate);
-            return;
-          }
-          if (pc.remoteDescription) {
-            await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
-          } else {
-            // Queue candidates if remote description isn't set yet
-            iceCandidateQueue.current.push(signal.candidate);
-          }
-        }
-      } catch (err) {
-        console.error('[VOICE] Error handling WebRTC signal:', err);
+    const handleReadyForOffer = (data: { roomId: string, from: string }) => {
+      if (data.from === playerId) return;
+      if (isInitiator) {
+        console.log('[VOICE] ready_for_offer RECEIVED');
+        p2ReadyForOfferRef.current = true;
+        attemptSendOffer();
       }
     };
 
-    socket.on('webrtc_signal', handleSignal);
+    const handleOffer = async (data: { roomId: string, sdp: string, from: string }) => {
+      if (data.from === playerId) return;
+      console.log('[VOICE] OFFER RECEIVED');
+      const pc = pcRef.current;
+      if (!pc) return;
+      
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: data.sdp }));
+        console.log('[VOICE] REMOTE DESCRIPTION SET (Offer)');
+        
+        while (iceCandidateQueue.current.length > 0) {
+          const candidate = iceCandidateQueue.current.shift();
+          if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+
+        console.log('[VOICE] ANSWER CREATED (creating...)');
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        console.log('[VOICE] ANSWER CREATED and LocalDescription set');
+        
+        socket.emit('webrtc_answer', {
+          roomId,
+          from: playerId,
+          sdp: answer.sdp
+        });
+        console.log('[VOICE] ANSWER SENT');
+      } catch (e) {
+        console.error('[VOICE] handleOffer error', e);
+      }
+    };
+
+    const handleAnswer = async (data: { roomId: string, sdp: string, from: string }) => {
+      if (data.from === playerId) return;
+      console.log('[VOICE] ANSWER RECEIVED');
+      const pc = pcRef.current;
+      if (!pc) return;
+      
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: data.sdp }));
+        console.log('[VOICE] REMOTE DESCRIPTION SET (Answer)');
+        
+        while (iceCandidateQueue.current.length > 0) {
+          const candidate = iceCandidateQueue.current.shift();
+          if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        }
+      } catch (e) {
+        console.error('[VOICE] handleAnswer error', e);
+      }
+    };
+
+    const handleIceCandidate = async (data: { roomId: string, candidate: any, from: string }) => {
+      if (data.from === playerId) return;
+      console.log('[VOICE] ICE CANDIDATE RECEIVED');
+      const pc = pcRef.current;
+      if (!pc) {
+        iceCandidateQueue.current.push(data.candidate);
+        return;
+      }
+      if (pc.remoteDescription) {
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      } else {
+        iceCandidateQueue.current.push(data.candidate);
+      }
+    };
+
+    socket.on('ready_for_offer', handleReadyForOffer);
+    socket.on('webrtc_offer', handleOffer);
+    socket.on('webrtc_answer', handleAnswer);
+    socket.on('webrtc_ice_candidate', handleIceCandidate);
+
     return () => {
-      socket.off('webrtc_signal', handleSignal);
+      socket.off('ready_for_offer', handleReadyForOffer);
+      socket.off('webrtc_offer', handleOffer);
+      socket.off('webrtc_answer', handleAnswer);
+      socket.off('webrtc_ice_candidate', handleIceCandidate);
     };
   }, [socket, roomId, playerId, isInitiator, attemptSendOffer]);
 

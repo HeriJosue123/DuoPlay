@@ -79,7 +79,7 @@ export const RoomView: React.FC = () => {
       socket.off('chat_message', handleRoomUpdate);
       socket.off('session_closed', handleSessionClosed);
     };
-  }, [socket, id, navigate, playerId, room]);
+  }, [socket, id, navigate, playerId]);
 
   const copyCode = () => {
     if (id) {
