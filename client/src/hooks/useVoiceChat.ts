@@ -14,33 +14,28 @@ interface UseVoiceChatProps {
 export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }: UseVoiceChatProps) => {
   const [voiceState, setVoiceState] = useState<VoiceState>('idle');
   const [isMuted, setIsMuted] = useState(true); // OFF by default
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const speakingRafRef = useRef<number | null>(null);
   
   const iceCandidateQueue = useRef<RTCIceCandidateInit[]>([]);
   const p2ReadyForOfferRef = useRef<boolean>(false);
-  const pcReadyRef = useRef<boolean>(false); // tracks if our pc is fully instantiated and tracks are added
   const offerSentRef = useRef<boolean>(false);
+  const isCleaningUp = useRef<boolean>(false);
 
   const attemptSendOffer = useCallback(async () => {
     if (!isInitiator) return;
     if (!pcRef.current) return;
-    if (!pcReadyRef.current) return;
     if (!p2ReadyForOfferRef.current) return;
     if (offerSentRef.current) return;
 
     try {
       offerSentRef.current = true;
-      console.log('[VOICE] OFFER CREATED (creating...)');
+      console.log('[IOS VOICE] attemptSendOffer STARTED');
       const offer = await pcRef.current.createOffer();
       await pcRef.current.setLocalDescription(offer);
-      console.log('[VOICE] OFFER CREATED and LocalDescription set');
+      console.log(`[IOS VOICE] LocalDescription SET (Offer). signalingState: ${pcRef.current.signalingState}`);
       
       if (socket) {
         socket.emit('webrtc_offer', {
@@ -48,22 +43,29 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
           from: playerId,
           sdp: offer.sdp
         });
-        console.log('[VOICE] OFFER SENT');
+        console.log('[IOS VOICE] OFFER SENT');
       }
     } catch (err) {
-      console.error('[VOICE] Error creating offer:', err);
+      console.error('[IOS VOICE] Error creating offer:', err);
     }
   }, [isInitiator, socket, roomId, playerId]);
 
   // Initialize Audio & PeerConnection
   const initWebRTC = useCallback(async () => {
     if (pcRef.current) return; // Already initialized
+    if (isCleaningUp.current) return;
     
-    console.log(`[VOICE] initWebRTC called. isActive: ${isActive}, isInitiator: ${isInitiator}`);
+    console.log(`[IOS VOICE] initWebRTC called. isActive: ${isActive}, isInitiator: ${isInitiator}`);
     
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error('[IOS VOICE] navigator.mediaDevices.getUserMedia NOT SUPPORTED. HTTPS required.');
+      setVoiceState('no-permission');
+      return;
+    }
+
     try {
       setVoiceState('requesting');
-      console.log('[VOICE] Requesting getUserMedia...');
+      console.log('[IOS VOICE] getUserMedia START (audio only)');
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -72,13 +74,16 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
         },
         video: false
       });
-      console.log('[VOICE] getUserMedia OK');
+      console.log('[IOS VOICE] getUserMedia SUCCESS');
       
       localStreamRef.current = stream;
-      // Force initial tracks to be disabled (Mute is ON by default)
+      
+      // Microphone MUST start OFF (Muted = true initially)
       stream.getAudioTracks().forEach(track => {
         track.enabled = false;
+        console.log(`[IOS VOICE] Track initialized to disabled (muted): ${track.enabled}`);
       });
+      setIsMuted(true);
 
       const pc = new RTCPeerConnection({
         iceServers: [
@@ -86,22 +91,26 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
           { urls: 'stun:stun1.l.google.com:19302' }
         ]
       });
-      console.log('[VOICE] PeerConnection CREATED');
+      console.log('[IOS VOICE] RTCPeerConnection created');
       pcRef.current = pc;
-      pcReadyRef.current = false;
       iceCandidateQueue.current = [];
+      p2ReadyForOfferRef.current = false;
+      offerSentRef.current = false;
 
       // Add local tracks
       stream.getTracks().forEach(track => {
+        console.log(`[IOS VOICE] pc.addTrack: ${track.kind}`);
         pc.addTrack(track, stream);
       });
 
       // Listen for remote tracks
       pc.ontrack = (event) => {
-        console.log('[VOICE] ONTRACK EVENT FIRED');
+        console.log('[IOS VOICE] pc.ontrack EVENT FIRED');
         if (event.streams && event.streams[0]) {
+          console.log('[IOS VOICE] remote stream assigned (streams[0])');
           setRemoteStream(event.streams[0]);
         } else {
+          console.log('[IOS VOICE] remote stream assigned (fallback new MediaStream)');
           setRemoteStream(new MediaStream([event.track]));
         }
       };
@@ -109,7 +118,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       // Handle ICE candidates
       pc.onicecandidate = (event) => {
         if (event.candidate && socket) {
-          console.log('[VOICE] ICE CANDIDATE SENT');
+          console.log('[IOS VOICE] pc.onicecandidate -> EMIT webrtc_ice_candidate');
           socket.emit('webrtc_ice_candidate', {
             roomId,
             from: playerId,
@@ -118,60 +127,78 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
         }
       };
 
-      // More reliable than connectionState in older mobile browsers
+      // Connection state monitors
       pc.oniceconnectionstatechange = () => {
-        console.log(`[VOICE] ICE STATE: ${pc.iceConnectionState}`);
+        console.log(`[IOS VOICE] pc.oniceconnectionstatechange: ${pc.iceConnectionState}`);
         if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
           setVoiceState('connected');
         } else if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
-          setVoiceState('connecting');
+          // It might just be temporarily disconnected, but failed means it's dead.
+          if (pc.iceConnectionState === 'failed') setVoiceState('error');
         }
       };
 
       pc.onconnectionstatechange = () => {
-        console.log(`[VOICE] CONNECTION STATE: ${pc.connectionState}`);
+        console.log(`[IOS VOICE] pc.onconnectionstatechange: ${pc.connectionState}`);
+        if (pc.connectionState === 'connected') {
+          setVoiceState('connected');
+        } else if (pc.connectionState === 'failed') {
+          setVoiceState('error');
+        }
+      };
+
+      pc.onsignalingstatechange = () => {
+        console.log(`[IOS VOICE] pc.onsignalingstatechange: ${pc.signalingState}`);
       };
 
       setVoiceState('connecting');
-      pcReadyRef.current = true;
 
-      // Instead of shooting the offer blindly, P2 tells P1 it is ready to receive
+      // P2 signals readiness so P1 can send offer safely
       if (!isInitiator && socket) {
-        console.log('[VOICE] ready_for_offer SENT');
+        console.log('[IOS VOICE] Non-initiator sending ready_for_offer');
         socket.emit('ready_for_offer', {
           roomId,
           from: playerId
         });
-      } else if (isInitiator) {
+      } else if (isInitiator && p2ReadyForOfferRef.current) {
         attemptSendOffer();
       }
 
-    } catch (err) {
-      console.error('[VOICE] Error accessing microphone:', err);
+    } catch (err: any) {
+      console.error('[IOS VOICE] Error accessing microphone:', err);
       setVoiceState('no-permission');
     }
   }, [roomId, playerId, socket, isInitiator, attemptSendOffer, isActive]);
 
   // Clean up WebRTC
   const cleanupWebRTC = useCallback(() => {
-    console.log('[VOICE] cleanupWebRTC called');
-    if (speakingRafRef.current) cancelAnimationFrame(speakingRafRef.current);
-    if (audioContextRef.current) audioContextRef.current.close();
+    console.log('[IOS VOICE] cleanupWebRTC called');
+    isCleaningUp.current = true;
+    
     if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current.getTracks().forEach(track => {
+        track.enabled = false;
+        track.stop();
+      });
       localStreamRef.current = null;
     }
+    
     if (pcRef.current) {
+      pcRef.current.ontrack = null;
+      pcRef.current.onicecandidate = null;
+      pcRef.current.oniceconnectionstatechange = null;
+      pcRef.current.onconnectionstatechange = null;
+      pcRef.current.onsignalingstatechange = null;
       pcRef.current.close();
       pcRef.current = null;
     }
-    pcReadyRef.current = false;
+    
     p2ReadyForOfferRef.current = false;
     offerSentRef.current = false;
     iceCandidateQueue.current = [];
     setRemoteStream(null);
     setVoiceState('idle');
-    setIsSpeaking(false);
+    isCleaningUp.current = false;
   }, []);
 
   // Handle Activation/Deactivation based on Room State
@@ -181,8 +208,15 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
     } else {
       cleanupWebRTC();
     }
-    return () => cleanupWebRTC();
+    // We intentionally DO NOT return cleanupWebRTC() here for normal unmounts
+    // unless the room is actually deactivated. React strict mode or minor updates
+    // should not tear down the connection.
   }, [isActive, initWebRTC, cleanupWebRTC]);
+
+  // Run cleanup ONLY on full unmount to prevent race conditions on simple re-renders
+  useEffect(() => {
+    return () => cleanupWebRTC();
+  }, [cleanupWebRTC]);
 
   // Handle Socket Signaling
   useEffect(() => {
@@ -191,7 +225,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
     const handleReadyForOffer = (data: { roomId: string, from: string }) => {
       if (data.from === playerId) return;
       if (isInitiator) {
-        console.log('[VOICE] ready_for_offer RECEIVED');
+        console.log('[IOS VOICE] ready_for_offer RECEIVED');
         p2ReadyForOfferRef.current = true;
         attemptSendOffer();
       }
@@ -199,65 +233,82 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
 
     const handleOffer = async (data: { roomId: string, sdp: string, from: string }) => {
       if (data.from === playerId) return;
-      console.log('[VOICE] OFFER RECEIVED');
+      console.log('[IOS VOICE] webrtc_offer RECEIVED');
       const pc = pcRef.current;
-      if (!pc) return;
+      if (!pc) {
+        console.warn('[IOS VOICE] PeerConnection not initialized yet when offer received');
+        return;
+      }
       
       try {
         await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: data.sdp }));
-        console.log('[VOICE] REMOTE DESCRIPTION SET (Offer)');
+        console.log(`[IOS VOICE] REMOTE DESCRIPTION SET (Offer). signalingState: ${pc.signalingState}`);
         
         while (iceCandidateQueue.current.length > 0) {
           const candidate = iceCandidateQueue.current.shift();
-          if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          if (candidate) {
+            console.log('[IOS VOICE] Processing queued ICE candidate');
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          }
         }
 
-        console.log('[VOICE] ANSWER CREATED (creating...)');
+        console.log('[IOS VOICE] ANSWER CREATED (creating...)');
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        console.log('[VOICE] ANSWER CREATED and LocalDescription set');
+        console.log(`[IOS VOICE] ANSWER CREATED and LocalDescription set. signalingState: ${pc.signalingState}`);
         
         socket.emit('webrtc_answer', {
           roomId,
           from: playerId,
           sdp: answer.sdp
         });
-        console.log('[VOICE] ANSWER SENT');
+        console.log('[IOS VOICE] webrtc_answer SENT');
       } catch (e) {
-        console.error('[VOICE] handleOffer error', e);
+        console.error('[IOS VOICE] handleOffer error', e);
       }
     };
 
     const handleAnswer = async (data: { roomId: string, sdp: string, from: string }) => {
       if (data.from === playerId) return;
-      console.log('[VOICE] ANSWER RECEIVED');
+      console.log('[IOS VOICE] webrtc_answer RECEIVED');
       const pc = pcRef.current;
       if (!pc) return;
       
       try {
         await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: data.sdp }));
-        console.log('[VOICE] REMOTE DESCRIPTION SET (Answer)');
+        console.log(`[IOS VOICE] REMOTE DESCRIPTION SET (Answer). signalingState: ${pc.signalingState}`);
         
         while (iceCandidateQueue.current.length > 0) {
           const candidate = iceCandidateQueue.current.shift();
-          if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          if (candidate) {
+            console.log('[IOS VOICE] Processing queued ICE candidate');
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          }
         }
       } catch (e) {
-        console.error('[VOICE] handleAnswer error', e);
+        console.error('[IOS VOICE] handleAnswer error', e);
       }
     };
 
     const handleIceCandidate = async (data: { roomId: string, candidate: any, from: string }) => {
       if (data.from === playerId) return;
-      console.log('[VOICE] ICE CANDIDATE RECEIVED');
+      console.log('[IOS VOICE] webrtc_ice_candidate RECEIVED');
       const pc = pcRef.current;
       if (!pc) {
+        console.log('[IOS VOICE] Queuing ICE candidate (No PC yet)');
         iceCandidateQueue.current.push(data.candidate);
         return;
       }
+      
       if (pc.remoteDescription) {
-        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+          console.log('[IOS VOICE] ICE candidate processed directly');
+        } catch (e) {
+          console.error('[IOS VOICE] Error adding ICE candidate directly:', e);
+        }
       } else {
+        console.log('[IOS VOICE] Queuing ICE candidate (No remoteDescription yet)');
         iceCandidateQueue.current.push(data.candidate);
       }
     };
@@ -275,60 +326,14 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
     };
   }, [socket, roomId, playerId, isInitiator, attemptSendOffer]);
 
-  // Handle Audio Activity (Speaking indicator)
-  useEffect(() => {
-    if (!remoteStream) {
-      setIsSpeaking(false);
-      return;
-    }
-
-    try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioContextRef.current = audioContext;
-      const analyser = audioContext.createAnalyser();
-      analyserRef.current = analyser;
-      analyser.fftSize = 256;
-
-      // Clone the stream to prevent Safari from rerouting and muting the <audio> playback!
-      const clonedStream = remoteStream.clone();
-      const source = audioContext.createMediaStreamSource(clonedStream);
-      source.connect(analyser);
-
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-
-      const checkAudioLevel = () => {
-        if (!analyserRef.current) return;
-        analyserRef.current.getByteFrequencyData(dataArray);
-        
-        let sum = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i];
-        }
-        const average = sum / bufferLength;
-
-        setIsSpeaking(average > 10);
-        speakingRafRef.current = requestAnimationFrame(checkAudioLevel);
-      };
-
-      checkAudioLevel();
-    } catch (err) {
-      console.error('Error setting up audio analyser:', err);
-    }
-
-    return () => {
-      if (speakingRafRef.current) cancelAnimationFrame(speakingRafRef.current);
-      if (audioContextRef.current) audioContextRef.current.close();
-    };
-  }, [remoteStream]);
-
-  // Toggle Mute
   const toggleMute = useCallback(() => {
     setIsMuted(prev => {
       const nextMuted = !prev;
+      console.log(`[IOS VOICE] Toggling mute state to: ${nextMuted}`);
       if (localStreamRef.current) {
         localStreamRef.current.getAudioTracks().forEach(track => {
           track.enabled = !nextMuted;
+          console.log(`[IOS VOICE] Track enabled set to: ${track.enabled}`);
         });
       }
       return nextMuted;
@@ -340,7 +345,6 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
     isMuted,
     toggleMute,
     remoteStream,
-    isSpeaking,
     retryAccess: initWebRTC
   };
 };
