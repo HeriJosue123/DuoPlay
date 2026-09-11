@@ -22,7 +22,7 @@ export const Home: React.FC = () => {
       
       socket.emit('join_room', { playerName: savedName, roomId: savedRoomId, playerId }, (response: any) => {
         if (response.success) {
-          navigate(`/room/${response.room.roomId}`, { state: { room: response.room } });
+          navigate(`/room/${response.room.roomId}`, { state: { room: response.room }, replace: true });
         } else {
           // Session expired or invalid
           localStorage.removeItem('duoplay_roomId');

@@ -13,19 +13,14 @@ export const RoomView: React.FC = () => {
   const [room, setRoom] = useState<Room | null>(location.state?.room || null);
 
   useEffect(() => {
-    if (!socket || !id || !playerId) return;
-
+    // Si no hay sala en el estado (ej. recargó la página directamente en /room/:id)
+    // Redirigimos inmediatamente a '/' para que Home maneje la recuperación SPA
     if (!room) {
-      const name = localStorage.getItem('duoplay_name') || 'Jugador';
-      socket.emit('join_room', { playerName: name, roomId: id, playerId }, (res: any) => {
-        if (res.success) {
-          setRoom(res.room);
-        } else {
-          localStorage.removeItem('duoplay_roomId');
-          navigate('/');
-        }
-      });
+      navigate('/', { replace: true });
+      return;
     }
+
+    if (!socket || !id || !playerId) return;
 
     const handleUpdate = (updatedRoom: Room) => setRoom(updatedRoom);
     
@@ -39,9 +34,6 @@ export const RoomView: React.FC = () => {
     socket.on('player_left', handlePlayerLeft);
     socket.on('game_started', handleUpdate);
     socket.on('game_state_updated', handleUpdate);
-
-    // Removed the beforeunload listener that emitted 'leave_room'.
-    // Now closing the tab relies on socket.disconnect, triggering the 30s recovery window.
 
     return () => {
       socket.off('player_joined', handleUpdate);
@@ -72,7 +64,7 @@ export const RoomView: React.FC = () => {
       socket.emit('leave_room', { roomId: id, playerId });
       localStorage.removeItem('duoplay_roomId');
     }
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   if (!room) return null;
