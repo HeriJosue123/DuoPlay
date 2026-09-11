@@ -31,9 +31,9 @@ export const GameCard: React.FC<Props> = ({ game, onSelect }) => {
                <span className="text-red-500">O</span>
              </div>
           )}
-          {game.id === 'coming-soon' && (
-             <div className="text-3xl sm:text-5xl font-black text-slate-500 opacity-30">
-               🔒
+          {game.id === 'memory-match' && (
+             <div className="flex gap-2 sm:gap-4 text-3xl sm:text-5xl font-black opacity-30 text-white">
+               <span>🧠</span>
              </div>
           )}
         </div>

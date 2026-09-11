@@ -61,12 +61,13 @@ export class TicTacToe implements GameEngine {
     }
 
     const { index } = move;
-    if (index < 0 || index > 8 || !room.gameState || room.gameState.board[index] !== null) {
+    const state = room.gameState as import('../types').TicTacToeState;
+    if (index < 0 || index > 8 || !state || state.board[index] !== null) {
       return { success: false, message: 'Invalid move.' };
     }
 
     const playerSymbol = room.matchState.symbolAssignments[playerId];
-    room.gameState.board[index] = playerSymbol;
+    state.board[index] = playerSymbol;
 
     this.checkGameOver(room);
 
@@ -86,7 +87,8 @@ export class TicTacToe implements GameEngine {
   checkGameOver(room: Room): void {
     if (!room.gameState || !room.matchState) return;
 
-    const board = room.gameState.board;
+    const state = room.gameState as import('../types').TicTacToeState;
+    const board = state.board;
     const winningCombinations = [
       [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
       [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
@@ -106,7 +108,7 @@ export class TicTacToe implements GameEngine {
     }
 
     if (winnerSymbol) {
-      room.gameState.winningLine = winLine;
+      state.winningLine = winLine;
       room.matchState.status = 'round_finished';
       
       const winnerId = Object.keys(room.matchState.symbolAssignments).find(

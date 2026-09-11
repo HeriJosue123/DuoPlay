@@ -17,11 +17,11 @@ export const gamesCatalog: GameConfig[] = [
     available: true
   },
   {
-    id: "coming-soon",
-    name: "PRÓXIMAMENTE",
-    description: "Nuevos juegos están por llegar.",
-    image: "/games/coming-soon.webp",
+    id: "memory-match",
+    name: "MEMORY MATCH",
+    description: "Encuentra las parejas antes que tu rival.",
+    image: "/games/coming-soon.webp", // For now use coming-soon or we can use another fallback
     players: 2,
-    available: false
+    available: true
   }
 ];

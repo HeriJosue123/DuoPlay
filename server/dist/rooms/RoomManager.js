@@ -4,13 +4,13 @@ exports.RoomManager = void 0;
 class RoomManager {
     rooms = new Map();
     disconnectTimers = new Map();
-    createRoom(player, totalRounds = 5) {
+    createRoom(player, totalRounds = 5, gameId = 'tic-tac-toe') {
         const roomId = this.generateRoomId();
         player.connected = true;
         const room = {
             roomId,
             players: [player],
-            selectedGame: 'tic-tac-toe',
+            selectedGame: gameId,
             settings: { totalRounds },
             status: 'waiting',
             matchState: null,

@@ -14,7 +14,7 @@ export const TicTacToe: React.FC<Props> = ({ room, playerId, onLeave }) => {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   const matchState = room.matchState;
-  const gameState = room.gameState;
+  const gameState = room.gameState as import('../../types').TicTacToeState;
   if (!matchState || !gameState) return null;
 
   const myPlayer = room.players.find(p => p.id === playerId);

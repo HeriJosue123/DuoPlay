@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 import { TicTacToe } from '../games/TicTacToe/TicTacToe';
+import { MemoryMatch } from '../games/MemoryMatch/MemoryMatch';
 import { RoomVoice } from '../components/RoomVoice/RoomVoice';
 import { Copy } from 'lucide-react';
 import type { Room } from '../types';
@@ -86,6 +87,13 @@ export const RoomView: React.FC = () => {
 
   if (!room) return null;
 
+  const renderGame = () => {
+    if (room.selectedGame === 'memory-match') {
+      return <MemoryMatch room={room} playerId={playerId} onLeave={executeLeaveRoom} />;
+    }
+    return <TicTacToe room={room} playerId={playerId} onLeave={executeLeaveRoom} />;
+  };
+
   return (
     <>
       <RoomVoice room={room} />
@@ -96,7 +104,7 @@ export const RoomView: React.FC = () => {
         aria-label="Salir de la sala"
         className="absolute top-4 left-4 z-40 bg-black/50 hover:bg-[#111] border border-[#333] text-white/80 hover:text-white px-4 py-2 rounded-full text-xs font-black tracking-widest transition-all backdrop-blur-md active:scale-95 flex items-center gap-2"
       >
-        <span className="text-lg leading-none mt-[-2px]">←</span> SALIR
+        <span className="text-lg leading-none mt-[-2px]">×</span> SALIR
       </button>
 
       {/* Confirmation Modal */}
@@ -130,7 +138,7 @@ export const RoomView: React.FC = () => {
             <div className="absolute top-0 left-0 w-full h-full bg-red-500/5 pointer-events-none" />
             
             <div className="text-6xl mb-4 relative z-10 animate-bounce">
-              🚪
+              ⚠️
             </div>
             
             <div className="space-y-2 relative z-10">
@@ -145,7 +153,7 @@ export const RoomView: React.FC = () => {
             </div>
             
             <div className="text-xs font-black tracking-[0.4em] text-red-500 mb-6 uppercase relative z-10 pt-6 border-t border-[#333]">
-              ⏱ PARTIDA FINALIZADA
+              🏁 PARTIDA FINALIZADA
             </div>
             
             <button 
@@ -162,7 +170,7 @@ export const RoomView: React.FC = () => {
       )}
 
       {room.status === 'playing' || room.status === 'finished' ? (
-        <TicTacToe room={room} playerId={playerId} onLeave={executeLeaveRoom} />
+        renderGame()
       ) : (
         /* Lobby View */
         <div className="flex flex-col items-center justify-center flex-1 p-6 space-y-8 w-full max-w-sm mx-auto">

@@ -46,7 +46,7 @@ export const Home: React.FC = () => {
         localStorage.setItem('duoplay_roomId', response.room.roomId);
         navigate(`/room/${response.room.roomId}`, { state: { room: response.room } });
       } else {
-        setError(response.message || 'Error al crear sala');
+        setError(response.message || 'Error al crear la sala');
       }
     });
   };

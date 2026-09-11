@@ -3,14 +3,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SocketManager = void 0;
 const RoomManager_1 = require("../rooms/RoomManager");
 const TicTacToe_1 = require("../games/TicTacToe");
+const MemoryMatch_1 = require("../games/MemoryMatch");
 class SocketManager {
     io;
     roomManager;
     ticTacToe;
+    memoryMatch;
     constructor(io) {
         this.io = io;
         this.roomManager = new RoomManager_1.RoomManager();
         this.ticTacToe = new TicTacToe_1.TicTacToe();
+        this.memoryMatch = new MemoryMatch_1.MemoryMatch();
         this.io.on('connection', (socket) => {
             console.log('User connected:', socket.id);
             this.handleConnection(socket);
@@ -25,9 +28,10 @@ class SocketManager {
                 connected: true
             };
             const rounds = data.totalRounds || 5;
-            const room = this.roomManager.createRoom(player, rounds);
+            const gameId = data.gameId || 'tic-tac-toe';
+            const room = this.roomManager.createRoom(player, rounds, gameId);
             socket.join(room.roomId);
-            console.log(`Room created: ${room.roomId} by ${player.name} (${rounds} rounds)`);
+            console.log(`Room created: ${room.roomId} by ${player.name} (${rounds} rounds, game: ${gameId})`);
             callback({ success: true, room });
         });
         socket.on('join_room', (data, callback) => {
@@ -55,7 +59,12 @@ class SocketManager {
                 return callback({ success: false, message: 'Room not found' });
             if (room.players.length !== 2)
                 return callback({ success: false, message: 'Need 2 players to start' });
-            this.ticTacToe.initGame(room);
+            if (room.selectedGame === 'memory-match') {
+                this.memoryMatch.initGame(room);
+            }
+            else {
+                this.ticTacToe.initGame(room);
+            }
             this.io.to(room.roomId).emit('game_started', room);
             callback({ success: true });
         });
@@ -66,7 +75,9 @@ class SocketManager {
                     callback({ success: false, message: 'Room not found' });
                 return;
             }
-            const result = this.ticTacToe.handleMove(room, data.playerId, data.move);
+            const result = room.selectedGame === 'memory-match'
+                ? this.memoryMatch.handleMove(room, data.playerId, data.move)
+                : this.ticTacToe.handleMove(room, data.playerId, data.move);
             if (result.success) {
                 this.io.to(room.roomId).emit('game_state_updated', room);
             }
@@ -80,9 +91,28 @@ class SocketManager {
             const room = this.roomManager.getRoom(data.roomId);
             if (!room)
                 return callback({ success: false, message: 'Room not found' });
-            const result = this.ticTacToe.handleReady(room, data.playerId);
+            const result = room.selectedGame === 'memory-match'
+                ? this.memoryMatch.handleReady(room, data.playerId)
+                : this.ticTacToe.handleReady(room, data.playerId);
             if (result.success) {
                 this.io.to(room.roomId).emit('game_state_updated', room);
+            }
+            if (callback)
+                callback(result);
+        });
+        socket.on('resolve_turn', (data, callback) => {
+            const room = this.roomManager.getRoom(data.roomId);
+            if (!room || room.selectedGame !== 'memory-match') {
+                if (callback)
+                    callback({ success: false, message: 'Invalid room or game' });
+                return;
+            }
+            const result = this.memoryMatch.handleResolveTurn(room, data.playerId);
+            if (result.success) {
+                this.io.to(room.roomId).emit('game_state_updated', room);
+            }
+            else {
+                socket.emit('error', result.message);
             }
             if (callback)
                 callback(result);
