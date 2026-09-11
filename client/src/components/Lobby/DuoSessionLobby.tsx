@@ -14,7 +14,11 @@ export const DuoSessionLobby = ({ room }: { room: Room }) => {
   };
 
   const handleAccept = () => {
-    socket?.emit('accept_game', { roomId: room.roomId, playerId }, (res) => { if (!res || !res.success) alert('Server Error: ' + (res ? res.message : 'No response')); });
+    alert('CLICK ACEPTAR! Socket: ' + (socket ? socket.connected : 'NULO'));
+    if (!socket) { alert('ERROR: Socket es nulo'); return; }
+    socket.emit('accept_game', { roomId: room.roomId, playerId }, (res: any) => { 
+      alert('Respuesta Server: ' + JSON.stringify(res)); 
+    });
   };
 
   const handleCancel = () => {
