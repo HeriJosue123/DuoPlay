@@ -22,6 +22,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const speakingRafRef = useRef<number | null>(null);
+  const iceCandidateQueue = useRef<RTCIceCandidateInit[]>([]);
 
   // Initialize Audio & PeerConnection
   const initWebRTC = useCallback(async () => {
@@ -51,15 +52,20 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
         ]
       });
       pcRef.current = pc;
+      iceCandidateQueue.current = [];
 
       // Add local tracks
       stream.getTracks().forEach(track => {
         pc.addTrack(track, stream);
       });
 
-      // Handle incoming tracks
+      // Handle incoming tracks (Safari fallback for missing streams array)
       pc.ontrack = (event) => {
-        setRemoteStream(event.streams[0]);
+        if (event.streams && event.streams.length > 0) {
+          setRemoteStream(event.streams[0]);
+        } else {
+          setRemoteStream(new MediaStream([event.track]));
+        }
       };
 
       // Handle ICE candidates
@@ -73,24 +79,23 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
         }
       };
 
-      pc.onconnectionstatechange = () => {
-        if (pc.connectionState === 'connected') {
+      // More reliable than connectionState in older mobile browsers
+      pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
           setVoiceState('connected');
-        } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-          setVoiceState('connecting'); // Or error, but we'll attempt to reconnect later
+        } else if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
+          setVoiceState('connecting');
         }
       };
 
       setVoiceState('connecting');
 
-      // Initiator creates the offer
-      if (isInitiator) {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket?.emit('webrtc_signal', {
+      // Instead of shooting the offer blindly, P2 tells P1 it is ready to receive
+      if (!isInitiator && socket) {
+        socket.emit('webrtc_signal', {
           roomId,
           playerId,
-          signal: { type: 'offer', offer }
+          signal: { type: 'ready_for_offer' }
         });
       }
 
@@ -112,6 +117,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       pcRef.current.close();
       pcRef.current = null;
     }
+    iceCandidateQueue.current = [];
     setRemoteStream(null);
     setVoiceState('idle');
     setIsSpeaking(false);
@@ -132,7 +138,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
     if (!socket) return;
 
     const handleSignal = async (data: { playerId: string, signal: any }) => {
-      // Ignore our own signals (just in case, though server filters it)
+      // Ignore our own signals
       if (data.playerId === playerId) return;
       
       const pc = pcRef.current;
@@ -141,8 +147,24 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       const { signal } = data;
       
       try {
-        if (signal.type === 'offer') {
+        if (signal.type === 'ready_for_offer' && isInitiator) {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socket.emit('webrtc_signal', {
+            roomId,
+            playerId,
+            signal: { type: 'offer', offer }
+          });
+        } 
+        else if (signal.type === 'offer') {
           await pc.setRemoteDescription(new RTCSessionDescription(signal.offer));
+          
+          // Drain any queued ICE candidates that arrived before the offer
+          while (iceCandidateQueue.current.length > 0) {
+            const candidate = iceCandidateQueue.current.shift();
+            if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          }
+
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           socket.emit('webrtc_signal', {
@@ -150,10 +172,23 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
             playerId,
             signal: { type: 'answer', answer }
           });
-        } else if (signal.type === 'answer') {
+        } 
+        else if (signal.type === 'answer') {
           await pc.setRemoteDescription(new RTCSessionDescription(signal.answer));
-        } else if (signal.type === 'ice-candidate') {
-          await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+          
+          // Drain any queued ICE candidates that arrived before the answer
+          while (iceCandidateQueue.current.length > 0) {
+            const candidate = iceCandidateQueue.current.shift();
+            if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          }
+        } 
+        else if (signal.type === 'ice-candidate') {
+          if (pc.remoteDescription) {
+            await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+          } else {
+            // Queue candidates if remote description isn't set yet
+            iceCandidateQueue.current.push(signal.candidate);
+          }
         }
       } catch (err) {
         console.error('Error handling WebRTC signal:', err);
@@ -164,7 +199,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
     return () => {
       socket.off('webrtc_signal', handleSignal);
     };
-  }, [socket, roomId, playerId]);
+  }, [socket, roomId, playerId, isInitiator]);
 
   // Handle Audio Activity (Speaking indicator)
   useEffect(() => {
@@ -174,7 +209,6 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
     }
 
     try {
-      // Create audio context and analyser
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       audioContextRef.current = audioContext;
       const analyser = audioContext.createAnalyser();
@@ -191,16 +225,13 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
         if (!analyserRef.current) return;
         analyserRef.current.getByteFrequencyData(dataArray);
         
-        // Calculate average volume
         let sum = 0;
         for (let i = 0; i < bufferLength; i++) {
           sum += dataArray[i];
         }
         const average = sum / bufferLength;
 
-        // Threshold to determine if speaking
         setIsSpeaking(average > 10);
-
         speakingRafRef.current = requestAnimationFrame(checkAudioLevel);
       };
 
