@@ -219,7 +219,7 @@ export const TicTacToe: React.FC<Props> = ({ room, playerId, onLeave }) => {
                   onClick={onLeave}
                   className="w-full bg-[#111] hover:bg-[#222] border border-red-500/30 text-red-400 font-black py-3 px-4 rounded-xl transition-transform active:scale-95 tracking-widest text-xs"
                 >
-                  SALIR DE LA PARTIDA
+                  VOLVER A LA SALA
                 </button>
               </div>
             </div>
@@ -319,7 +319,7 @@ export const TicTacToe: React.FC<Props> = ({ room, playerId, onLeave }) => {
                 onClick={onLeave}
                 className="w-full bg-[#111] hover:bg-[#222] border border-[#333] text-white font-black py-4 px-6 rounded-2xl transition-transform active:scale-95 tracking-widest text-sm"
               >
-                VOLVER AL MENÚ
+                VOLVER A LA SALA
               </button>
             </div>
           </div>

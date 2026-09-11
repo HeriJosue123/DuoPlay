@@ -44,10 +44,20 @@ export interface MatchState {
   readyPlayers: string[]; 
 }
 
+export interface ChatMessage {
+  id: string;
+  playerId: string;
+  playerName: string;
+  text: string;
+  timestamp: number;
+}
+
 export interface Room {
   roomId: string;
   players: Player[];
-  selectedGame: 'tic-tac-toe' | 'memory-match' | null;
+  activeGame: 'tic-tac-toe' | 'memory-match' | null;
+  gameProposal: { gameId: string, from: string } | null;
+  chat: ChatMessage[];
   settings: {
     totalRounds: number;
   };

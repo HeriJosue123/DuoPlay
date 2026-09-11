@@ -102,7 +102,7 @@ export const MemoryMatch: React.FC<MemoryMatchProps> = ({ room, playerId, onLeav
               className="w-full flex items-center justify-center gap-2 panel-dark border border-[#333] hover:bg-[#111] text-white font-black py-4 px-6 rounded-2xl transition-transform active:scale-95 text-xs tracking-widest"
             >
               <LogOut size={16} />
-              CATÁLOGO
+              VOLVER A LA SALA
             </button>
           </div>
         </div>
