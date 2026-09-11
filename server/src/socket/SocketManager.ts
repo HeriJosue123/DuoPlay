@@ -20,16 +20,17 @@ export class SocketManager {
   }
 
   private handleConnection(socket: Socket) {
-    socket.on('create_room', (data: { playerName: string, playerId: string }, callback) => {
+    socket.on('create_room', (data: { playerName: string, playerId: string, totalRounds?: number }, callback) => {
       const player: Player = {
         id: data.playerId,
         name: data.playerName,
         socketId: socket.id,
         connected: true
       };
-      const room = this.roomManager.createRoom(player);
+      const rounds = data.totalRounds || 5;
+      const room = this.roomManager.createRoom(player, rounds);
       socket.join(room.roomId);
-      console.log(`Room created: ${room.roomId} by ${player.name}`);
+      console.log(`Room created: ${room.roomId} by ${player.name} (${rounds} rounds)`);
       callback({ success: true, room });
     });
 

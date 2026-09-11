@@ -12,11 +12,11 @@ export class TicTacToe implements GameEngine {
 
     room.matchState = {
       round: 1,
+      totalRounds: room.settings.totalRounds,
       score: {
         [p1]: 0,
         [p2]: 0
       },
-      targetScore: 5,
       symbolAssignments: {
         [p1]: p1Symbol,
         [p2]: p2Symbol
@@ -116,18 +116,36 @@ export class TicTacToe implements GameEngine {
       if (winnerId) {
         room.matchState.roundWinner = winnerId;
         room.matchState.score[winnerId] += 1;
-
-        if (room.matchState.score[winnerId] >= room.matchState.targetScore) {
-          room.matchState.status = 'match_finished';
-          room.matchState.matchWinner = winnerId;
-        }
       }
-      return;
-    }
-
-    if (!board.includes(null)) {
+    } else if (!board.includes(null)) {
       room.matchState.status = 'round_finished';
       room.matchState.roundWinner = 'draw';
+    }
+
+    // Check if match is completely over
+    if (room.matchState.status === 'round_finished') {
+      if (room.matchState.round >= room.matchState.totalRounds) {
+        room.matchState.status = 'match_finished';
+        
+        const p1 = room.players[0].id;
+        // Check if there is a second player before extracting ID
+        const p2 = room.players.length > 1 ? room.players[1].id : null;
+        
+        if (!p2) {
+           room.matchState.matchWinner = p1;
+        } else {
+           const p1Score = room.matchState.score[p1];
+           const p2Score = room.matchState.score[p2];
+
+           if (p1Score > p2Score) {
+             room.matchState.matchWinner = p1;
+           } else if (p2Score > p1Score) {
+             room.matchState.matchWinner = p2;
+           } else {
+             room.matchState.matchWinner = 'draw';
+           }
+        }
+      }
     }
   }
 

@@ -24,9 +24,10 @@ class SocketManager {
                 socketId: socket.id,
                 connected: true
             };
-            const room = this.roomManager.createRoom(player);
+            const rounds = data.totalRounds || 5;
+            const room = this.roomManager.createRoom(player, rounds);
             socket.join(room.roomId);
-            console.log(`Room created: ${room.roomId} by ${player.name}`);
+            console.log(`Room created: ${room.roomId} by ${player.name} (${rounds} rounds)`);
             callback({ success: true, room });
         });
         socket.on('join_room', (data, callback) => {

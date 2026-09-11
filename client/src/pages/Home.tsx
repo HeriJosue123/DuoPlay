@@ -9,12 +9,12 @@ export const Home: React.FC = () => {
   const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu');
   const [error, setError] = useState('');
   const [reconnecting, setReconnecting] = useState(false);
+  const [totalRounds, setTotalRounds] = useState(5);
   
   const { socket, isConnected, playerId } = useSocket();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Attempt auto-reconnect if we have a saved room
     const savedRoomId = localStorage.getItem('duoplay_roomId');
     if (savedRoomId && socket && isConnected && !reconnecting && mode === 'menu') {
       setReconnecting(true);
@@ -24,7 +24,6 @@ export const Home: React.FC = () => {
         if (response.success) {
           navigate(`/room/${response.room.roomId}`, { state: { room: response.room }, replace: true });
         } else {
-          // Session expired or invalid
           localStorage.removeItem('duoplay_roomId');
           setReconnecting(false);
         }
@@ -38,7 +37,7 @@ export const Home: React.FC = () => {
     
     localStorage.setItem('duoplay_name', name);
 
-    socket.emit('create_room', { playerName: name, playerId }, (response: any) => {
+    socket.emit('create_room', { playerName: name, playerId, totalRounds }, (response: any) => {
       if (response.success) {
         localStorage.setItem('duoplay_roomId', response.room.roomId);
         navigate(`/room/${response.room.roomId}`, { state: { room: response.room } });
@@ -110,8 +109,8 @@ export const Home: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center flex-1 p-6 w-full max-w-sm mx-auto">
-      <div className="w-full p-8 panel-dark rounded-3xl space-y-8">
+    <div className="flex flex-col items-center justify-center flex-1 p-6 w-full max-w-sm mx-auto overflow-y-auto">
+      <div className="w-full p-8 panel-dark rounded-3xl space-y-8 my-auto">
         <button 
           onClick={() => { setMode('menu'); setError(''); }}
           className="text-slate-500 hover:text-white text-xs font-bold tracking-widest uppercase transition-colors"
@@ -146,6 +145,33 @@ export const Home: React.FC = () => {
                 placeholder="000000"
                 className="w-full panel-dark border-[#333] focus:border-white rounded-xl px-4 py-4 text-white font-mono text-center text-2xl tracking-[0.3em] font-black placeholder:text-slate-800 focus:outline-none transition-colors"
               />
+            </div>
+          )}
+
+          {mode === 'create' && (
+            <div className="space-y-4">
+              <label className="block text-xs font-bold text-slate-500 tracking-widest uppercase text-center">
+                ¿Cuántas rondas?
+              </label>
+              <div className="grid grid-cols-5 gap-2">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setTotalRounds(r)}
+                    className={`
+                      aspect-square rounded-xl font-black text-lg flex items-center justify-center transition-all
+                      ${totalRounds === r 
+                        ? 'bg-white text-black shadow-[0_0_15px_rgba(255,255,255,0.2)] scale-110 z-10' 
+                        : 'bg-[#111] text-slate-500 border border-[#222] hover:bg-[#1a1a1a] hover:text-white'}
+                    `}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+              <p className="text-center text-xs font-bold text-white tracking-[0.2em] mt-2 bg-[#111] py-2 rounded-lg border border-[#222]">
+                {totalRounds} {totalRounds === 1 ? 'RONDA' : 'RONDAS'}
+              </p>
             </div>
           )}
 
