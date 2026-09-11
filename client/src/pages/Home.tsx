@@ -77,25 +77,25 @@ export const Home: React.FC = () => {
 
   if (mode === 'catalog') {
     return (
-      <div className="flex flex-col flex-1 p-6 w-full max-w-5xl mx-auto overflow-y-auto">
-        <div className="text-center space-y-2 mb-10 mt-6">
-          <h1 className="text-5xl font-black tracking-tight text-white glow-blue">
+      <div className="flex flex-col flex-1 p-4 sm:p-6 w-full max-w-3xl mx-auto overflow-y-auto">
+        <div className="text-center space-y-1 sm:space-y-2 mb-8 sm:mb-10 mt-2 sm:mt-6">
+          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white glow-blue">
             DUO PLAY
           </h1>
-          <p className="text-slate-500 text-xs tracking-[0.3em] uppercase">Dos teléfonos. Una partida.</p>
+          <p className="text-slate-500 text-[10px] sm:text-xs tracking-[0.3em] uppercase">Dos teléfonos. Una partida.</p>
         </div>
         
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-sm font-black text-white tracking-[0.3em] uppercase">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h2 className="text-xs sm:text-sm font-black text-white tracking-[0.3em] uppercase">
             JUEGOS
           </h2>
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-600 tracking-widest">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-red-500 shadow-[0_0_10px_#ef4444]'}`} />
+          <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold text-slate-600 tracking-widest">
+            <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_10px_#22c55e]' : 'bg-red-500 shadow-[0_0_10px_#ef4444]'}`} />
             {isConnected ? 'CONECTADO' : 'OFFLINE'}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 w-full max-w-2xl mx-auto pb-12">
           {gamesCatalog.map(game => (
             <GameCard 
               key={game.id} 
