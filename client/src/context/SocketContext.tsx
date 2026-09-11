@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-// Use current hostname to connect, assuming backend runs on same IP, port 3001
-const SOCKET_URL = `http://${window.location.hostname}:3001`;
+// Production: use the Render backend URL from VITE_SERVER_URL.
+// Local development: fall back to the backend on port 3001.
+const SOCKET_URL =
+  import.meta.env.VITE_SERVER_URL || `http://${window.location.hostname}:3001`;
 
 interface SocketContextProps {
   socket: Socket | null;
