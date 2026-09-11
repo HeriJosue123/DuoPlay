@@ -106,11 +106,14 @@ export class SocketManager {
       // Validate that room and player exist before broadcasting
       const room = this.roomManager.getRoom(data.roomId);
       if (room && room.players.some(p => p.id === data.playerId)) {
+        console.log(`[VOICE SERVER] Forwarding ${data.signal.type} from ${data.playerId} in room ${data.roomId}`);
         // Broadcast the signal to the other player in the room
         socket.to(data.roomId).emit('webrtc_signal', {
           playerId: data.playerId,
           signal: data.signal
         });
+      } else {
+        console.warn(`[VOICE SERVER] Ignored signal from ${data.playerId} - Room or player not found`);
       }
     });
 

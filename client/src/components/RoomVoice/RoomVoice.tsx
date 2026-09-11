@@ -38,9 +38,12 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
   // Attach remote stream to audio element
   useEffect(() => {
     if (audioRef.current && remoteStream) {
+      console.log('[VOICE] REMOTE AUDIO PLAY (Attaching to <audio>)');
       audioRef.current.srcObject = remoteStream;
-      audioRef.current.play().catch((err) => {
-        console.error('Audio playback failed due to autoplay policy:', err);
+      audioRef.current.play().then(() => {
+        console.log('[VOICE] REMOTE AUDIO PLAY SUCCESS');
+      }).catch((err) => {
+        console.error('[VOICE] Audio playback failed due to autoplay policy:', err);
         setAutoplayBlocked(true);
       });
     }
@@ -48,7 +51,9 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
 
   const handlePlayBlockedAudio = () => {
     if (audioRef.current) {
+      console.log('[VOICE] User interacting to unblock audio');
       audioRef.current.play().then(() => {
+        console.log('[VOICE] REMOTE AUDIO PLAY SUCCESS (After unblock)');
         setAutoplayBlocked(false);
       }).catch(console.error);
     }
