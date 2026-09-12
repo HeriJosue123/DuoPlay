@@ -142,9 +142,10 @@ export const RoomView: React.FC = () => {
         <button
           onClick={() => setShowExitConfirm(true)}
           aria-label="Cerrar sesión"
-          className="absolute top-4 left-4 z-40 bg-black/50 hover:bg-red-500/20 border border-[#333] hover:border-red-500/50 text-white/80 hover:text-red-400 px-4 py-2 rounded-full text-[10px] font-black tracking-widest transition-all backdrop-blur-md active:scale-95 flex items-center gap-2 group"
+          className="absolute top-4 left-4 z-40 bg-black/50 hover:bg-red-500/20 border border-[#333] hover:border-red-500/50 text-white/80 hover:text-red-400 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-[9px] sm:text-[10px] font-black tracking-widest transition-all backdrop-blur-md active:scale-95 flex items-center gap-1.5 sm:gap-2 group"
         >
-          <LogOut size={12} className="group-hover:-translate-x-1 transition-transform" /> CERRAR SESIÓN
+          <LogOut size={12} className="group-hover:-translate-x-1 transition-transform" /> 
+          <span>CERRAR<span className="hidden sm:inline"> SESIÓN</span></span>
         </button>
       )}
 
@@ -153,9 +154,10 @@ export const RoomView: React.FC = () => {
         <button
           onClick={() => setShowLeaveGameConfirm(true)}
           aria-label="Salir de la partida"
-          className="absolute top-4 left-4 z-40 bg-black/50 hover:bg-orange-500/20 border border-[#333] hover:border-orange-500/50 text-white/80 hover:text-orange-400 px-4 py-2 rounded-full text-[10px] font-black tracking-widest transition-all backdrop-blur-md active:scale-95 flex items-center gap-2 group"
+          className="absolute top-4 left-4 z-40 bg-black/50 hover:bg-orange-500/20 border border-[#333] hover:border-orange-500/50 text-white/80 hover:text-orange-400 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-[9px] sm:text-[10px] font-black tracking-widest transition-all backdrop-blur-md active:scale-95 flex items-center gap-1.5 sm:gap-2 group"
         >
-          <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" /> SALIR DE LA PARTIDA
+          <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" /> 
+          <span>SALIR<span className="hidden sm:inline"> DE PARTIDA</span></span>
         </button>
       )}
 
