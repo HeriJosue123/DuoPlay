@@ -35,18 +35,13 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
   // Handle attaching and playing the remote stream safely
   useEffect(() => {
     if (audioRef.current && remoteStream) {
-      console.log('[IOS VOICE] Assigning remoteStream to audio element srcObject');
       audioRef.current.srcObject = remoteStream;
-      
-      console.log('[IOS VOICE] Executing audio.play() automatically');
       const playPromise = audioRef.current.play();
       
       if (playPromise !== undefined) {
         playPromise.then(() => {
-          console.log('[IOS VOICE] audio.play() SUCCESS (autoPlay)');
           setRemoteAudioState('playing');
         }).catch((err) => {
-          console.error('[IOS VOICE] audio.play() BLOCKED by Autoplay Policy:', err);
           setRemoteAudioState('blocked');
           setPlayErrorMsg(`${err.name}: ${err.message}`);
         });
@@ -58,15 +53,12 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
 
   const handlePlayBlockedAudio = () => {
     if (audioRef.current) {
-      console.log('[IOS VOICE] User manually clicked UNBLOCK audio button');
       const playPromise = audioRef.current.play();
       
       if (playPromise !== undefined) {
         playPromise.then(() => {
-          console.log('[IOS VOICE] audio.play() SUCCESS (manual interaction)');
           setRemoteAudioState('playing');
         }).catch((err) => {
-          console.error('[IOS VOICE] audio.play() FAILED despite manual interaction:', err);
           setPlayErrorMsg(`${err.name}: ${err.message}`);
         });
       }
@@ -93,7 +85,7 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
             onClick={handlePlayBlockedAudio}
             className="bg-red-500/20 border border-red-500 text-white text-[10px] font-bold px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-pulse"
           >
-            🔊 ACTIVAR AUDIO
+            ⚠️ ACTIVAR AUDIO
           </button>
           {playErrorMsg && (
             <div className="text-[8px] text-red-400 bg-black/80 px-2 py-1 rounded max-w-[150px] break-words text-center border border-red-900/50">
@@ -130,7 +122,7 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
             }
           `}
         >
-          {/* Subtle glow when unmuted (since we removed AnalyserNode for Safari safety, we just show a static glow) */}
+          {/* Subtle glow when unmuted */}
           {!isMuted && voiceState === 'connected' && (
             <div className="absolute inset-0 rounded-full border-2 border-green-500/50 shadow-[0_0_10px_rgba(74,222,128,0.3)]" />
           )}
