@@ -6,7 +6,7 @@ import { MemoryMatch } from '../games/MemoryMatch/MemoryMatch';
 import { RoomVoice } from '../components/RoomVoice/RoomVoice';
 import { DuoSessionLobby } from '../components/Lobby/DuoSessionLobby';
 import { ChatBox } from '../components/Chat/ChatBox';
-import { Copy, LogOut } from 'lucide-react';
+import { Copy, LogOut, ArrowLeft } from 'lucide-react';
 import type { Room } from '../types';
 
 export const RoomView: React.FC = () => {
@@ -16,6 +16,7 @@ export const RoomView: React.FC = () => {
   
   const [room, setRoom] = useState<Room | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showLeaveGameConfirm, setShowLeaveGameConfirm] = useState(false);
   const [sessionClosed, setSessionClosed] = useState(false);
   
   const isLeaving = useRef(false);
@@ -30,7 +31,10 @@ export const RoomView: React.FC = () => {
 
     // Handlers
     const handleRoomUpdate = (updatedRoom: Room) => {
-      if (updatedRoom.roomId === id) setRoom(updatedRoom);
+      if (updatedRoom.roomId === id) {
+        setRoom(updatedRoom);
+        if (!updatedRoom.activeGame) setShowLeaveGameConfirm(false);
+      }
     };
 
     const handleSessionClosed = () => {
@@ -91,6 +95,7 @@ export const RoomView: React.FC = () => {
   const handleReturnToLobby = () => {
     if (socket && id) {
       socket.emit('return_to_lobby', { roomId: id, playerId });
+      setShowLeaveGameConfirm(false);
     }
   };
 
@@ -141,6 +146,41 @@ export const RoomView: React.FC = () => {
         >
           <LogOut size={12} className="group-hover:-translate-x-1 transition-transform" /> CERRAR SESIÓN
         </button>
+      )}
+
+      {/* Floating Leave Game Button */}
+      {room.activeGame && (
+        <button
+          onClick={() => setShowLeaveGameConfirm(true)}
+          aria-label="Salir de la partida"
+          className="absolute top-4 left-4 z-40 bg-black/50 hover:bg-orange-500/20 border border-[#333] hover:border-orange-500/50 text-white/80 hover:text-orange-400 px-4 py-2 rounded-full text-[10px] font-black tracking-widest transition-all backdrop-blur-md active:scale-95 flex items-center gap-2 group"
+        >
+          <ArrowLeft size={12} className="group-hover:-translate-x-1 transition-transform" /> SALIR DE LA PARTIDA
+        </button>
+      )}
+
+      {/* Confirmation Modal - Leave Game */}
+      {showLeaveGameConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-[300px] panel-dark p-6 rounded-3xl border border-[#333] text-center shadow-2xl animate-pop">
+            <h3 className="text-white font-black tracking-widest mb-2 text-sm">¿SALIR DE LA PARTIDA?</h3>
+            <p className="text-xs text-slate-400 font-bold mb-6">Volverás al lobby de DUO SESSION.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowLeaveGameConfirm(false)}
+                className="flex-1 bg-[#111] hover:bg-[#222] border border-[#333] text-white text-xs font-black py-3 rounded-xl transition-all"
+              >
+                CANCELAR
+              </button>
+              <button 
+                onClick={handleReturnToLobby}
+                className="flex-1 bg-orange-600 hover:bg-orange-500 text-white text-xs font-black py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(249,115,22,0.3)]"
+              >
+                SALIR
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Confirmation Modal */}
