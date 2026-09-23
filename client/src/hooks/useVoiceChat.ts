@@ -93,19 +93,24 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
           { urls: 'stun:stun1.l.google.com:19302' },
           // TURN relay: required when direct P2P fails (4G/5G, CGNAT, symmetric NAT)
           {
-            urls: 'turn:openrelay.metered.ca:80',
-            username: 'openrelayproject',
-            credential: 'openrelayproject'
+            urls: 'turn:standard.relay.metered.ca:80',
+            username: '7be957963f6b203cbd74db8f',
+            credential: 'VVk4LtrBXs5cP0Gf'
           },
           {
-            urls: 'turn:openrelay.metered.ca:443',
-            username: 'openrelayproject',
-            credential: 'openrelayproject'
+            urls: 'turn:standard.relay.metered.ca:80?transport=tcp',
+            username: '7be957963f6b203cbd74db8f',
+            credential: 'VVk4LtrBXs5cP0Gf'
           },
           {
-            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-            username: 'openrelayproject',
-            credential: 'openrelayproject'
+            urls: 'turn:standard.relay.metered.ca:443',
+            username: '7be957963f6b203cbd74db8f',
+            credential: 'VVk4LtrBXs5cP0Gf'
+          },
+          {
+            urls: 'turn:standard.relay.metered.ca:443?transport=tcp',
+            username: '7be957963f6b203cbd74db8f',
+            credential: 'VVk4LtrBXs5cP0Gf'
           }
         ]
       });
