@@ -71,7 +71,7 @@ export const Home = () => {
 
   return (
     <div 
-      className="relative flex flex-col items-center justify-center min-h-[100dvh] lg:h-[100dvh] w-full lg:w-[100vw] overflow-hidden bg-[#020202] font-sans selection:bg-blue-500/30"
+      className="relative flex flex-col items-center justify-center min-h-[100dvh] lg:h-[100dvh] w-full lg:w-screen overflow-hidden bg-[#020202] font-sans selection:bg-blue-500/30"
       style={{
         paddingTop: 'env(safe-area-inset-top)',
         paddingBottom: 'env(safe-area-inset-bottom)'
@@ -96,19 +96,19 @@ export const Home = () => {
         <div className="absolute -top-[20%] left-[10%] w-[2px] h-[140%] bg-blue-500 rotate-[35deg] shadow-[0_0_20px_#3b82f6,0_0_40px_#3b82f6] opacity-80" />
         <div className="absolute -top-[20%] right-[10%] w-[2px] h-[140%] bg-red-500 rotate-[-35deg] shadow-[0_0_20px_#ef4444,0_0_40px_#ef4444] opacity-80" />
 
-        {/* Decorative Floating Cards - HD and Responsive */}
+        {/* Decorative Floating Cards - Correct Desktop Sizing (80px - 140px) */}
         {/* Desktop Cards */}
         <div className="hidden lg:block">
-          <div className="absolute top-[12%] left-[12%] rotate-[-15deg] scale-75 drop-shadow-[0_25px_35px_rgba(0,0,0,0.8)] opacity-95">
+          <div className="absolute top-[12%] left-[15%] rotate-[-15deg] scale-90 drop-shadow-[0_20px_35px_rgba(0,0,0,0.8)] opacity-95">
             <UnoCard size="lg" />
           </div>
-          <div className="absolute bottom-[15%] left-[8%] rotate-[25deg] scale-50 drop-shadow-[0_15px_25px_rgba(0,0,0,0.9)] opacity-90">
+          <div className="absolute bottom-[18%] left-[12%] rotate-[20deg] scale-75 drop-shadow-[0_15px_25px_rgba(0,0,0,0.9)] opacity-90 blur-[1px]">
             <UnoCard size="lg" />
           </div>
-          <div className="absolute top-[25%] right-[15%] rotate-[20deg] scale-50 drop-shadow-[0_15px_25px_rgba(0,0,0,0.8)] opacity-90 blur-[1px]">
+          <div className="absolute top-[20%] right-[15%] rotate-[15deg] scale-75 drop-shadow-[0_15px_25px_rgba(0,0,0,0.8)] opacity-90 blur-[1px]">
             <UnoCard size="lg" />
           </div>
-          <div className="absolute bottom-[10%] right-[5%] rotate-[-25deg] scale-75 drop-shadow-[0_25px_35px_rgba(0,0,0,0.9)] opacity-95">
+          <div className="absolute bottom-[15%] right-[12%] rotate-[-20deg] scale-90 drop-shadow-[0_20px_35px_rgba(0,0,0,0.9)] opacity-95">
             <UnoCard size="lg" />
           </div>
         </div>
@@ -142,28 +142,28 @@ export const Home = () => {
       </div>
 
       {mode === 'menu' ? (
-        <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-[800px] px-4 sm:px-6 flex-1 py-12 lg:py-0 lg:my-auto">
+        <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-[800px] px-4 sm:px-6 flex-1 py-8 sm:py-12 lg:py-4">
           
           {/* Logo Section */}
-          <div className="text-center mb-10 sm:mb-16 lg:mb-8 relative">
-            <h1 className="text-[clamp(4.5rem,15vw,8rem)] lg:text-[7rem] leading-none font-black text-transparent bg-clip-text bg-gradient-to-b from-blue-300 via-blue-500 to-blue-700 filter drop-shadow-[0_0_20px_rgba(59,130,246,0.6)] tracking-tighter italic">
+          <div className="text-center mb-8 sm:mb-10 relative">
+            <h1 className="text-[clamp(4.5rem,15vw,8rem)] lg:text-[5.5rem] xl:text-[6.5rem] leading-none font-black text-transparent bg-clip-text bg-gradient-to-b from-blue-300 via-blue-500 to-blue-700 filter drop-shadow-[0_0_20px_rgba(59,130,246,0.6)] tracking-tighter italic">
               UNO
             </h1>
-            <h2 className="text-[clamp(2.5rem,8vw,5rem)] lg:text-[4rem] font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-200 uppercase tracking-widest filter drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] -mt-2 sm:-mt-6 lg:-mt-4 relative z-10">
+            <h2 className="text-[clamp(2.5rem,8vw,5rem)] lg:text-[3rem] xl:text-[4rem] font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-200 uppercase tracking-widest filter drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] -mt-2 sm:-mt-6 lg:-mt-3 xl:-mt-5 relative z-10">
               ONLINE
             </h2>
             
             {/* Swoosh simulation */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[110%] sm:h-[130%] lg:h-[120%] border-[4px] sm:border-[8px] border-transparent border-t-red-600 border-l-red-600 rounded-[100%] rotate-[-15deg] opacity-90 shadow-[0_0_15px_rgba(220,38,38,0.6)] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[110%] sm:h-[130%] lg:w-[115%] lg:h-[115%] border-[4px] sm:border-[8px] border-transparent border-t-red-600 border-l-red-600 rounded-[100%] rotate-[-15deg] opacity-90 shadow-[0_0_15px_rgba(220,38,38,0.6)] pointer-events-none" />
             
-            <p className="text-zinc-300 font-black text-[10px] sm:text-sm lg:text-sm tracking-[0.3em] sm:tracking-[0.5em] uppercase mt-6 sm:mt-10 lg:mt-6 relative z-20">
+            <p className="text-zinc-300 font-black text-[10px] sm:text-sm tracking-[0.3em] sm:tracking-[0.5em] uppercase mt-6 sm:mt-10 lg:mt-6 relative z-20">
               Multijugador 2-6 Jugadores
             </p>
             <div className="w-16 sm:w-24 lg:w-20 h-1 bg-gradient-to-r from-blue-500 to-red-500 mx-auto mt-3 sm:mt-5 lg:mt-4 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
           </div>
 
           {/* Action Buttons */}
-          <div className="w-[calc(100%-16px)] sm:w-[420px] max-w-full space-y-4 lg:space-y-3">
+          <div className="w-[calc(100%-16px)] sm:w-[420px] max-w-full space-y-4 lg:space-y-4">
             <button 
               onClick={() => { setName(''); setRoomCode(''); setError(''); setMode('create'); }}
               className="group relative w-full flex items-center justify-center bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 hover:from-blue-500 hover:via-blue-400 hover:to-blue-500 text-white font-black py-4 sm:py-5 px-6 rounded-2xl transition-all shadow-[0_0_30px_rgba(59,130,246,0.6)] active:scale-95 border border-blue-400/50 overflow-hidden min-h-[56px] sm:min-h-[72px] lg:min-h-[64px]"
@@ -193,7 +193,7 @@ export const Home = () => {
           </div>
 
           {/* Server Status Pill */}
-          <div className="mt-8 sm:mt-12 lg:mt-8 flex items-center gap-2 sm:gap-3 bg-black/60 border border-white/10 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full backdrop-blur-md shadow-xl">
+          <div className="mt-8 sm:mt-10 lg:mt-8 flex items-center gap-2 sm:gap-3 bg-black/60 border border-white/10 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full backdrop-blur-md shadow-xl">
             <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_12px_#22c55e]' : 'bg-red-500 shadow-[0_0_12px_#ef4444]'} animate-pulse`} />
             <span className="text-[10px] sm:text-xs font-black text-zinc-200 tracking-[0.2em] uppercase">
               {isConnected ? 'SERVIDOR ONLINE' : 'SERVIDOR OFFLINE'}
