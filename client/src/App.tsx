@@ -12,7 +12,7 @@ function App() {
           <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-600/5 blur-[150px] rounded-full pointer-events-none" />
           <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-red-600/5 blur-[150px] rounded-full pointer-events-none" />
           
-          <div className="flex-1 flex flex-col z-10 w-full max-w-7xl mx-auto">
+          <div className="flex-1 flex flex-col z-10 w-full">
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/room/:id" element={<RoomView />} />
