@@ -204,7 +204,7 @@ export const UnoBoard: React.FC<UnoBoardProps> = ({ room }) => {
       </div>
 
       {/* Center Table */}
-      <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 scale-75 sm:scale-100">
+      <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 scale-75 sm:scale-100 flex flex-col items-center gap-6">
         <CenterTable 
           topCard={topCard}
           drawPileCount={state.drawPileCount}
@@ -214,29 +214,42 @@ export const UnoBoard: React.FC<UnoBoardProps> = ({ room }) => {
           onDraw={handleDraw}
           canDraw={isMyTurn && !state.playerWhoDrew}
         />
+        
+        {/* Turn Indicator exactly like mockup */}
+        <div className="flex items-center gap-4 transition-opacity duration-300">
+          <div className={`px-6 py-2 rounded-full border-2 font-black text-sm tracking-widest flex items-center gap-2 ${isMyTurn ? 'border-yellow-400 text-yellow-400 bg-black/50 shadow-[0_0_15px_rgba(250,204,21,0.3)]' : 'border-zinc-700 text-zinc-500 bg-black/30'}`}>
+            <span className="w-4 h-4 rounded-full border-2 border-current flex items-center justify-center text-[10px]">L</span>
+            {isMyTurn ? 'TU TURNO' : 'ESPERANDO'}
+          </div>
+          <div className="px-5 py-2 rounded-full border-2 border-zinc-700 bg-black/30 text-white font-bold text-sm tracking-widest flex items-center gap-2">
+            <span className="w-4 h-4 rounded-full border-2 border-zinc-500 flex items-center justify-center text-[10px]">L</span>
+            15s
+          </div>
+        </div>
       </div>
 
       {/* My Hand */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
-        <div className="pointer-events-auto">
-          {/* My Player Info Plate */}
-          <div className="absolute -top-12 left-4 sm:left-8 bg-zinc-900/80 backdrop-blur-md border border-white/10 text-white font-bold px-4 py-2 rounded-2xl shadow-lg flex items-center gap-4">
-            <div className="flex flex-col">
-              <span className="text-xs text-zinc-400">YOU</span>
-              <span className="text-sm sm:text-base truncate max-w-[150px]">{myPlayer.name}</span>
+      <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none flex flex-col justify-end">
+        
+        {/* Bottom HUD Layer */}
+        <div className="absolute bottom-6 left-6 pointer-events-auto flex items-end gap-4 z-50">
+          <div className="bg-[#111]/80 backdrop-blur-xl border border-white/10 p-2 pr-6 rounded-2xl shadow-xl flex items-center gap-4 group">
+            <div className="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center border border-white/5">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </div>
-            {isMyTurn && (
-              <div className="bg-red-600 text-white text-xs font-black px-2 py-1 rounded animate-pulse">
-                YOUR TURN
-              </div>
-            )}
-            {myPlayer.isEliminated && (
-              <div className="bg-zinc-800 text-red-500 text-xs font-black px-2 py-1 rounded">
-                ELIMINATED
-              </div>
-            )}
+            <div className="flex flex-col">
+              <span className="text-xs text-white font-black tracking-widest flex items-center gap-1">TÚ <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.8)] inline-block"></span></span>
+              <span className="text-xs text-zinc-400 truncate max-w-[120px] font-bold">{myPlayer.name}</span>
+            </div>
           </div>
+          
+          <div className="hidden md:flex flex-col mb-1 pointer-events-none">
+            <span className="text-white font-black text-xs tracking-[0.2em]">DUO <span className="text-blue-500 glow-blue">PLAY</span></span>
+            <span className="text-[9px] text-zinc-500 font-bold">Juega. Conecta. Disfruta.</span>
+          </div>
+        </div>
 
+        <div className="pointer-events-auto">
           <UnoHand 
             cards={state.myHand || []}
             playableCardId={state.drawnCardPlayable?.id}

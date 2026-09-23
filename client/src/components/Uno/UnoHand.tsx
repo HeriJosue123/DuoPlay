@@ -58,62 +58,62 @@ export const UnoHand: React.FC<UnoHandProps> = ({
     return isWild || card.color === currentColor || card.value === topCardValue;
   };
 
-  // The overlap calculation adapts based on number of cards
-  const overlapSpacing = cards.length > 15 ? -40 : cards.length > 8 ? -30 : -20;
-  
   return (
-    <div className="relative w-full flex justify-center items-end px-4 h-48 sm:h-64">
-      {/* Scrollable container for many cards */}
-      <div 
-        ref={scrollRef}
-        className="flex flex-nowrap items-end pb-8 pt-16 overflow-x-auto overflow-y-hidden hide-scrollbar max-w-full px-8"
-        style={{ scrollBehavior: 'smooth' }}
-      >
-        <div className="flex justify-center" style={{ minWidth: 'min-content' }}>
-          {cards.map((card, index) => {
-            const isPlayable = checkPlayable(card);
-            const isSelected = selectedCardId === card.id;
-            
-            // Generate a subtle fan effect
-            const mid = cards.length / 2;
-            const distance = index - mid + 0.5;
-            const rotation = cards.length > 5 ? distance * 2 : distance * 4;
-            const translateY = Math.abs(distance) * (cards.length > 15 ? 1 : 2);
-            
-            return (
-              <div 
-                key={card.id}
-                className="transition-transform duration-300 ease-out origin-bottom hover:z-50"
-                style={{ 
-                  marginLeft: index === 0 ? 0 : `${overlapSpacing}px`,
-                  transform: `rotate(${rotation}deg) translateY(${translateY}px)`,
-                  zIndex: isSelected ? 50 : index
-                }}
-              >
-                <UnoCard 
-                  card={card}
-                  isPlayable={isPlayable}
-                  isSelected={isSelected}
-                  onClick={() => isPlayable && onSelectCard(card.id)}
-                  size="lg"
-                  className={isSelected ? '!scale-110' : ''}
-                />
-              </div>
-            );
-          })}
-        </div>
+    <div className="relative w-full flex justify-center items-end px-2 sm:px-8 h-40 sm:h-60 mb-2 sm:mb-4 pointer-events-none">
+      <div className="flex justify-center items-end relative pointer-events-auto" style={{ width: '100%', maxWidth: '900px' }}>
+        {cards.map((card, index) => {
+          const isPlayable = checkPlayable(card);
+          const isSelected = selectedCardId === card.id;
+          
+          // Card scaling based on total cards
+          const scaleFactor = cards.length > 20 ? 0.6 : cards.length > 14 ? 0.75 : cards.length > 8 ? 0.9 : 1;
+          const baseCardWidth = typeof window !== 'undefined' && window.innerWidth < 640 ? 60 : 100;
+          const effectiveWidth = baseCardWidth * scaleFactor;
+          
+          // Overlap math
+          const maxContainerWidth = typeof window !== 'undefined' ? Math.min(window.innerWidth * 0.9, 900) : 900;
+          const totalIdealWidth = cards.length * effectiveWidth;
+          
+          // If total width exceeds container, we overlap them tightly.
+          // We use negative margins.
+          let marginPx = 0;
+          if (totalIdealWidth > maxContainerWidth && cards.length > 1) {
+             const excess = totalIdealWidth - maxContainerWidth;
+             marginPx = -(excess / (cards.length - 1)) - (effectiveWidth * 0.1); 
+          } else {
+             // Default comfortable overlap
+             marginPx = cards.length > 1 ? -(effectiveWidth * 0.2) : 0;
+          }
+
+          // Generate a subtle fan effect
+          const mid = (cards.length - 1) / 2;
+          const distance = index - mid;
+          const rotation = distance * (cards.length > 15 ? 1 : 2.5);
+          const translateY = Math.abs(distance) * (cards.length > 15 ? 1 : 2);
+          
+          return (
+            <div 
+              key={card.id}
+              className="transition-all duration-300 ease-out origin-bottom hover:z-[60]"
+              style={{ 
+                marginLeft: index === 0 ? 0 : `${marginPx}px`,
+                transform: `rotate(${rotation}deg) translateY(${translateY}px) scale(${scaleFactor})`,
+                zIndex: isSelected ? 50 : index,
+                flexShrink: 0 // Prevent CSS flex from distorting the card aspect ratio
+              }}
+            >
+              <UnoCard 
+                card={card}
+                isPlayable={isPlayable}
+                isSelected={isSelected}
+                onClick={() => isPlayable && onSelectCard(card.id)}
+                size="lg" // We use lg but scale it down via transform scale()
+                className={isSelected ? '!scale-110' : 'hover:-translate-y-8'}
+              />
+            </div>
+          );
+        })}
       </div>
-      
-      {/* CSS to hide scrollbar but keep functionality */}
-      <style>{`
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </div>
   );
 };
