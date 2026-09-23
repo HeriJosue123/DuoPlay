@@ -65,13 +65,15 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
     }
   };
 
+  // Diagnostic log for state changes
+  useEffect(() => {
+    if (isActive) {
+      console.log(`[RoomVoice UI] State: ${voiceState} | Muted: ${isMuted}`);
+    }
+  }, [voiceState, isMuted, isActive]);
+
   return (
     <div className="absolute top-4 right-4 z-40 flex flex-col items-end gap-2">
-      {/* 
-        CRITICAL FOR SAFARI: 
-        - Must have autoPlay and playsInline
-        - Do NOT use muted=true for the remote stream
-      */}
       <audio 
         ref={audioRef} 
         autoPlay 
@@ -85,7 +87,7 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
             onClick={handlePlayBlockedAudio}
             className="bg-red-500/20 border border-red-500 text-white text-[10px] font-bold px-4 py-2 rounded-full flex items-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-pulse"
           >
-            ⚠️ ACTIVAR AUDIO
+            ▶ ACTIVAR AUDIO RIVAL
           </button>
           {playErrorMsg && (
             <div className="text-[8px] text-red-400 bg-black/80 px-2 py-1 rounded max-w-[150px] break-words text-center border border-red-900/50">
@@ -95,22 +97,34 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
         </div>
       )}
 
+      {voiceState === 'no-permission' && (
+        <div className="text-[10px] text-red-400 bg-black/80 px-3 py-2 rounded-lg max-w-[200px] text-center border border-red-900/50 mb-1">
+          Permiso de micrófono requerido. Por favor, habilítalo en tu navegador.
+        </div>
+      )}
+
       <div className="flex items-center gap-2">
-        <div className="text-[9px] font-bold tracking-widest uppercase text-slate-400">
+        <div className="text-[9px] font-bold tracking-widest uppercase text-slate-400 drop-shadow-md bg-black/40 px-2 py-1 rounded">
           {!isActive && 'Esperando voz...'}
           {isActive && voiceState === 'idle' && 'Iniciando...'}
           {voiceState === 'connecting' && 'Conectando...'}
-          {voiceState === 'requesting' && 'Permiso...'}
-          {voiceState === 'no-permission' && 'Sin acceso'}
+          {voiceState === 'requesting' && 'Pidiendo permiso...'}
+          {voiceState === 'no-permission' && <span className="text-red-400">Sin acceso</span>}
           {voiceState === 'connected' && (
-            isMuted ? 'Micrófono apagado' : <span className="text-green-400">Micrófono encendido</span>
+            isMuted ? 'Micrófono apagado' : <span className="text-green-400">Voz conectada</span>
           )}
-          {voiceState === 'error' && <span className="text-red-400">Error de conexión</span>}
+          {voiceState === 'error' && <span className="text-red-400">Error de red</span>}
         </div>
 
         <button
           onClick={voiceState === 'no-permission' ? retryAccess : toggleMute}
           disabled={!isActive || voiceState === 'requesting' || voiceState === 'connecting' || voiceState === 'error'}
+          title={
+            !isActive ? "WebRTC actual soporta exactamente 2 jugadores simultáneos." 
+            : voiceState === 'no-permission' ? "Reintentar permiso" 
+            : isMuted ? "Activar micrófono" 
+            : "Silenciar"
+          }
           className={`relative p-3 rounded-full transition-all backdrop-blur-md active:scale-95 border
             ${!isActive
               ? 'bg-black/50 border-[#222] text-slate-600 cursor-not-allowed'
@@ -122,7 +136,6 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
             }
           `}
         >
-          {/* Subtle glow when unmuted */}
           {!isMuted && voiceState === 'connected' && (
             <div className="absolute inset-0 rounded-full border-2 border-green-500/50 shadow-[0_0_10px_rgba(74,222,128,0.3)]" />
           )}

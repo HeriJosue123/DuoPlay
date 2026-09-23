@@ -165,11 +165,29 @@ export const UnoBoard: React.FC<UnoBoardProps> = ({ room }) => {
   const topCard = state.discardPile.length > 0 ? state.discardPile[state.discardPile.length - 1] : null;
 
   return (
-    <div className="relative w-full h-full min-h-screen bg-[#050505] overflow-hidden flex flex-col font-sans selection:bg-red-500/30">
+    <div className="relative w-full h-full min-h-screen bg-[#020202] overflow-hidden flex flex-col font-sans selection:bg-red-500/30">
       
-      {/* Background Ambience */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-zinc-900/20 via-[#050505] to-[#050505] pointer-events-none" />
-      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] pointer-events-none mix-blend-overlay" />
+      {/* Background Ambience - Pure CSS Futuristic Table */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        {/* Base radial table gradient */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_#0f172a_0%,_#020202_70%)] opacity-80" />
+        
+        {/* Subtle SVG Noise Texture */}
+        <div className="absolute inset-0 opacity-[0.015] mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }} />
+        
+        {/* Central blue/cyan glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] bg-cyan-900/10 rounded-full blur-[100px] animate-pulse pointer-events-none" style={{ animationDuration: '8s' }} />
+        
+        {/* Subtle red edge glows */}
+        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] bg-red-900/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] bg-red-900/10 rounded-full blur-[120px] pointer-events-none" />
+        
+        {/* Tech grid pattern */}
+        <div className="absolute inset-0 opacity-10" style={{ 
+          backgroundImage: `radial-gradient(circle at center, transparent 30%, #020202 80%), linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .05) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, .05) 75%, rgba(255, 255, 255, .05) 76%, transparent 77%, transparent)`, 
+          backgroundSize: '50px 50px' 
+        }} />
+      </div>
 
       {/* Opponents */}
       <div className="absolute inset-0 pointer-events-none">

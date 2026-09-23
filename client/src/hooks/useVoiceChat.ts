@@ -32,8 +32,10 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
 
     try {
       offerSentRef.current = true;
+      console.log('[WebRTC] Creating offer...');
       const offer = await pcRef.current.createOffer();
       await pcRef.current.setLocalDescription(offer);
+      console.log('[WebRTC] Offer created and local description set. Sending to peer...');
       
       if (socket) {
         socket.emit('webrtc_offer', {
@@ -43,6 +45,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
         });
       }
     } catch (err) {
+      console.error('[WebRTC] Error creating/sending offer:', err);
     }
   }, [isInitiator, socket, roomId, playerId]);
 
@@ -51,14 +54,16 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
     if (pcRef.current) return; // Already initialized
     if (isCleaningUp.current) return;
     
-    
+    console.log('[WebRTC] Initializing WebRTC...');
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error('[WebRTC] getUserMedia not supported on this browser.');
       setVoiceState('no-permission');
       return;
     }
 
     try {
       setVoiceState('requesting');
+      console.log('[WebRTC] Requesting microphone permission...');
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -67,6 +72,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
         },
         video: false
       });
+      console.log('[WebRTC] Microphone permission granted. Stream obtained.');
       
       localStreamRef.current = stream;
       
@@ -76,6 +82,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       });
       setIsMuted(true);
 
+      console.log('[WebRTC] Creating RTCPeerConnection...');
       const pc = new RTCPeerConnection({
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
@@ -91,6 +98,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
 
       // Listen for remote tracks
       pc.ontrack = (event) => {
+        console.log('[WebRTC] Remote track received:', event);
         if (event.streams && event.streams[0]) {
           setRemoteStream(event.streams[0]);
         } else {
@@ -101,6 +109,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       // Handle ICE candidates
       pc.onicecandidate = (event) => {
         if (event.candidate && socket) {
+          console.log('[WebRTC] Local ICE candidate generated, sending to peer...');
           socket.emit('webrtc_ice_candidate', {
             roomId,
             from: playerId,
@@ -111,6 +120,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
 
       // Connection state monitors
       pc.oniceconnectionstatechange = () => {
+        console.log(`[WebRTC] ICE Connection State changed to: ${pc.iceConnectionState}`);
         if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
           setVoiceState('connected');
         } else if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'disconnected') {
@@ -120,6 +130,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       };
 
       pc.onconnectionstatechange = () => {
+        console.log(`[WebRTC] Connection State changed to: ${pc.connectionState}`);
         if (pc.connectionState === 'connected') {
           setVoiceState('connected');
         } else if (pc.connectionState === 'failed') {
@@ -128,21 +139,25 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
       };
 
       pc.onsignalingstatechange = () => {
+        console.log(`[WebRTC] Signaling State changed to: ${pc.signalingState}`);
       };
 
       setVoiceState('connecting');
 
       // P2 signals readiness so P1 can send offer safely
       if (!isInitiator && socket) {
+        console.log('[WebRTC] I am NOT the initiator. Sending ready_for_offer...');
         socket.emit('ready_for_offer', {
           roomId,
           from: playerId
         });
       } else if (isInitiator && p2ReadyForOfferRef.current) {
+        console.log('[WebRTC] I am the initiator and peer is ready. Triggering offer...');
         attemptSendOffer();
       }
 
     } catch (err: any) {
+      console.error('[WebRTC] Error acquiring microphone:', err);
       setVoiceState('no-permission');
     }
   }, [roomId, playerId, socket, isInitiator, attemptSendOffer, isActive]);
@@ -150,6 +165,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
   // Clean up WebRTC
   const cleanupWebRTC = useCallback(() => {
     isCleaningUp.current = true;
+    console.log('[WebRTC] Cleaning up WebRTC...');
     
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => {
@@ -200,6 +216,7 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
 
     const handleReadyForOffer = (data: { roomId: string, from: string }) => {
       if (data.from === playerId) return;
+      console.log('[WebRTC] Received ready_for_offer from peer.');
       if (isInitiator) {
         p2ReadyForOfferRef.current = true;
         attemptSendOffer();
@@ -208,23 +225,29 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
 
     const handleOffer = async (data: { roomId: string, sdp: string, from: string }) => {
       if (data.from === playerId) return;
+      console.log('[WebRTC] Received offer from peer.');
       const pc = pcRef.current;
       if (!pc) {
+        console.warn('[WebRTC] Received offer but RTCPeerConnection is null.');
         return;
       }
       
       try {
         await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: data.sdp }));
+        console.log('[WebRTC] Remote description (offer) set.');
         
         while (iceCandidateQueue.current.length > 0) {
           const candidate = iceCandidateQueue.current.shift();
           if (candidate) {
+            console.log('[WebRTC] Processing queued ICE candidate...');
             await pc.addIceCandidate(new RTCIceCandidate(candidate));
           }
         }
 
+        console.log('[WebRTC] Creating answer...');
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
+        console.log('[WebRTC] Local description (answer) set. Sending to peer...');
         
         socket.emit('webrtc_answer', {
           roomId,
@@ -232,31 +255,38 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
           sdp: answer.sdp
         });
       } catch (e) {
+        console.error('[WebRTC] Error handling offer:', e);
       }
     };
 
     const handleAnswer = async (data: { roomId: string, sdp: string, from: string }) => {
       if (data.from === playerId) return;
+      console.log('[WebRTC] Received answer from peer.');
       const pc = pcRef.current;
       if (!pc) return;
       
       try {
         await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: data.sdp }));
+        console.log('[WebRTC] Remote description (answer) set.');
         
         while (iceCandidateQueue.current.length > 0) {
           const candidate = iceCandidateQueue.current.shift();
           if (candidate) {
+            console.log('[WebRTC] Processing queued ICE candidate...');
             await pc.addIceCandidate(new RTCIceCandidate(candidate));
           }
         }
       } catch (e) {
+        console.error('[WebRTC] Error handling answer:', e);
       }
     };
 
     const handleIceCandidate = async (data: { roomId: string, candidate: any, from: string }) => {
       if (data.from === playerId) return;
+      console.log('[WebRTC] Received ICE candidate from peer.');
       const pc = pcRef.current;
       if (!pc) {
+        console.log('[WebRTC] RTCPeerConnection not ready, queueing ICE candidate.');
         iceCandidateQueue.current.push(data.candidate);
         return;
       }
@@ -265,8 +295,10 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
         try {
           await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
         } catch (e) {
+          console.error('[WebRTC] Error adding ICE candidate:', e);
         }
       } else {
+        console.log('[WebRTC] Remote description not set yet, queueing ICE candidate.');
         iceCandidateQueue.current.push(data.candidate);
       }
     };
