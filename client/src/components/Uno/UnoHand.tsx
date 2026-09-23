@@ -59,52 +59,42 @@ export const UnoHand: React.FC<UnoHandProps> = ({
   };
 
   return (
-    <div className="relative w-full flex justify-center items-end px-2 sm:px-8 h-[120px] sm:h-[180px] mb-2 sm:mb-4 pointer-events-none">
-      <div 
-        ref={scrollRef}
-        className="flex justify-center items-end relative pointer-events-auto h-full w-full max-w-[800px]"
-      >
-        {cards.map((card, index) => {
-          const isPlayable = checkPlayable(card);
-          const isSelected = selectedCardId === card.id;
-          
-          let overlapPercent = 0;
-          if (cards.length > 1) {
-            if (cards.length <= 7) overlapPercent = (cards.length - 1) * 4; // up to 24%
-            else if (cards.length <= 12) overlapPercent = 24 + (cards.length - 7) * 6; // up to 54%
-            else overlapPercent = Math.min(82, 54 + (cards.length - 12) * 3.5); // max 82%
-          }
-          const marginStr = index === 0 ? '0' : `-${overlapPercent}%`;
-          
-          const mid = (cards.length - 1) / 2;
-          const distance = index - mid;
-          const rotFactor = cards.length > 12 ? 1.5 : cards.length > 7 ? 2.5 : 4;
-          const rotation = distance * rotFactor;
-          const translateY = Math.abs(distance) * 2;
-          
-          return (
+    <div className="w-full flex justify-center items-end px-2 mx-auto h-[110px] sm:h-[160px] max-w-[900px] pointer-events-none">
+      {cards.map((card, idx) => {
+        const isPlayable = checkPlayable(card);
+        const isSelected = selectedCardId === card.id;
+        const isLast = idx === cards.length - 1;
+        
+        const mid = (cards.length - 1) / 2;
+        const distance = idx - mid;
+        const rotFactor = cards.length > 12 ? 1.5 : cards.length > 6 ? 2.5 : 4;
+        const rotation = distance * rotFactor;
+        const transY = Math.abs(distance) * (cards.length > 10 ? 1 : 1.5);
+        
+        return (
+          <div 
+            key={card.id}
+            className={`relative pointer-events-auto h-full group ${isLast ? 'shrink-0' : 'shrink'} basis-[64px] sm:basis-[96px] transition-all duration-300`}
+            style={{ minWidth: '15px' }} // Ensures cards remain selectable even with 20+ cards
+          >
             <div 
-              key={card.id}
-              className="relative transition-all duration-300 ease-out origin-bottom hover:z-[60]"
-              style={{ 
-                marginLeft: marginStr,
-                transform: `rotate(${rotation}deg) translateY(${translateY}px)`,
-                zIndex: isSelected ? 50 : index,
+              className="absolute bottom-0 left-0 w-[64px] h-[96px] sm:w-[96px] sm:h-[144px] origin-bottom transition-transform duration-200"
+              style={{
+                transform: `rotate(${rotation}deg) translateY(${transY}px)`,
+                zIndex: isSelected ? 50 : idx,
               }}
             >
-              <div className="w-[56px] h-[84px] sm:w-[96px] sm:h-[144px] md:w-[112px] md:h-[168px]">
-                <UnoCard 
-                  card={card}
-                  isPlayable={isPlayable}
-                  isSelected={isSelected}
-                  onClick={() => isPlayable && onSelectCard(card.id)}
-                  className={`!w-full !h-full transition-transform duration-200 ${isSelected ? '!scale-110 -translate-y-4 sm:-translate-y-8' : 'hover:-translate-y-4 sm:hover:-translate-y-8'}`}
-                />
-              </div>
+              <UnoCard 
+                card={card}
+                isPlayable={isPlayable}
+                isSelected={isSelected}
+                onClick={() => isPlayable && onSelectCard(card.id)}
+                className={`!w-full !h-full shadow-[0_5px_15px_rgba(0,0,0,0.5)] transition-all duration-200 ${isSelected ? '!scale-110 -translate-y-6' : 'hover:-translate-y-4 sm:hover:-translate-y-6 hover:scale-105'}`}
+              />
             </div>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
