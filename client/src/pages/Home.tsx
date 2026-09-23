@@ -146,12 +146,16 @@ export const Home = () => {
           
           {/* Logo Section */}
           <div className="text-center mb-8 sm:mb-10 relative">
-            <h1 className="text-[clamp(4.5rem,15vw,8rem)] lg:text-[5.5rem] xl:text-[6.5rem] leading-none font-black text-transparent bg-clip-text bg-gradient-to-b from-blue-300 via-blue-500 to-blue-700 filter drop-shadow-[0_0_20px_rgba(59,130,246,0.6)] tracking-tighter italic">
-              UNO
-            </h1>
-            <h2 className="text-[clamp(2.5rem,8vw,5rem)] lg:text-[3rem] xl:text-[4rem] font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-200 uppercase tracking-widest filter drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] -mt-2 sm:-mt-6 lg:-mt-3 xl:-mt-5 relative z-10">
-              ONLINE
-            </h2>
+            <div className="filter drop-shadow-[0_0_20px_rgba(59,130,246,0.6)]">
+              <h1 className="text-[clamp(4.5rem,15vw,8rem)] lg:text-[5.5rem] xl:text-[6.5rem] leading-none font-black text-transparent bg-clip-text bg-gradient-to-b from-blue-300 via-blue-500 to-blue-700 tracking-tighter italic">
+                UNO
+              </h1>
+            </div>
+            <div className="filter drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] relative z-10 -mt-2 sm:-mt-6 lg:-mt-3 xl:-mt-5">
+              <h2 className="text-[clamp(2.5rem,8vw,5rem)] lg:text-[3rem] xl:text-[4rem] font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-blue-200 uppercase tracking-widest">
+                ONLINE
+              </h2>
+            </div>
             
             {/* Swoosh simulation */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[110%] sm:h-[130%] lg:w-[115%] lg:h-[115%] border-[4px] sm:border-[8px] border-transparent border-t-red-600 border-l-red-600 rounded-[100%] rotate-[-15deg] opacity-90 shadow-[0_0_15px_rgba(220,38,38,0.6)] pointer-events-none" />
