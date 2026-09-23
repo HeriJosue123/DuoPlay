@@ -42,10 +42,12 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isCurrentTurn, p
           {cards.map((_, i) => {
             const mid = (displayCount - 1) / 2;
             const distance = i - mid;
-            // Tighter fan for side players, wider for top
-            const angle = (isLeft || isRight) ? distance * 8 : distance * 10;
-            const transX = (isLeft || isRight) ? distance * 3 : distance * 8;
-            const transY = Math.abs(distance) * 2;
+            
+            // Standard hand fan
+            const angle = distance * 8;
+            const transX = distance * 4;
+            // Negative transY pushes the outer cards UP, forming a normal U shape.
+            const transY = -Math.abs(distance) * 4;
             
             return (
               <div 
@@ -70,7 +72,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isCurrentTurn, p
   };
 
   return (
-    <div className={`absolute flex flex-col items-center transition-all duration-500 ${positionClass} ${isEliminated ? 'opacity-50 grayscale' : ''}`}>
+    <div className={`relative flex flex-col items-center transition-all duration-500 ${positionClass} ${isEliminated ? 'opacity-50 grayscale' : ''}`}>
       
       {/* UNO Shout Bubble */}
       {hasCalledUno && (

@@ -194,77 +194,83 @@ export const UnoBoard: React.FC<UnoBoardProps> = ({ room }) => {
         }} />
       </div>
 
-      {/* Opponents Layer */}
+      {/* Side Opponents - Absolute relative to the screen to not disturb center flex flow */}
       <div className="absolute inset-0 pointer-events-none z-10">
-        <div className="pointer-events-auto absolute top-[25%] sm:top-[30%] left-[2%] sm:left-[10%]">{renderSeat(oppLeft, "left")}</div>
-        <div className="pointer-events-auto absolute top-[5%] sm:top-[8%] left-1/2 -translate-x-1/2">{renderSeat(oppTop, "top")}</div>
-        <div className="pointer-events-auto absolute top-[25%] sm:top-[30%] right-[2%] sm:right-[10%]">{renderSeat(oppRight, "right")}</div>
+        {oppLeft && <div className="pointer-events-auto absolute top-[40%] sm:top-[30%] -translate-y-1/2 left-[2%] sm:left-[10%]">{renderSeat(oppLeft, "left")}</div>}
+        {oppRight && <div className="pointer-events-auto absolute top-[40%] sm:top-[30%] -translate-y-1/2 right-[2%] sm:right-[10%]">{renderSeat(oppRight, "right")}</div>}
       </div>
 
-      {/* Top Flex Spacer */}
-      <div className="flex-1 min-h-0 pointer-events-none" />
+      {/* COMPACT CENTERED GAME AREA */}
+      <div className="relative w-full max-w-[1000px] flex flex-col items-center justify-center gap-4 sm:gap-6 z-20 px-2 mt-[-5vh] sm:mt-0">
+         
+         {/* 1. TOP OPPONENT */}
+         <div className="pointer-events-auto w-full flex justify-center z-20">
+            {oppTop && renderSeat(oppTop, "top")}
+         </div>
 
-      {/* Center Table Zone */}
-      <div className="flex-none flex flex-col items-center justify-center gap-4 sm:gap-6 z-10 relative pointer-events-none w-full">
-        <div className="pointer-events-auto">
-          <CenterTable 
-            topCard={topCard}
-            drawPileCount={state.drawPileCount}
-            stackValue={state.stackValue}
-            currentColor={state.currentColor}
-            direction={state.direction}
-            onDraw={handleDraw}
-            canDraw={isMyTurn && !state.playerWhoDrew}
-          />
-        </div>
-        
-        {/* Turn Indicator */}
-        <div className="flex items-center gap-3 sm:gap-4 transition-opacity duration-300 pointer-events-auto mt-2">
-          <div className={`px-4 sm:px-6 py-1.5 sm:py-2 rounded-full border-2 font-black text-xs sm:text-sm tracking-widest flex items-center gap-2 ${isMyTurn ? 'border-yellow-400 text-yellow-400 bg-black/80 shadow-[0_0_15px_rgba(250,204,21,0.4)]' : 'border-zinc-700 text-zinc-400 bg-black/60'}`}>
-            <span className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-current flex items-center justify-center text-[10px]">
-              {isMyTurn ? 'T' : 'E'}
-            </span>
-            {isMyTurn ? 'TU TURNO' : 'ESPERANDO'}
-          </div>
-          <div className="px-4 sm:px-5 py-1.5 sm:py-2 rounded-full border-2 border-zinc-700 bg-black/60 text-white font-bold text-xs sm:text-sm tracking-widest flex items-center gap-2">
-            <span className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-zinc-500 flex items-center justify-center text-[10px]">L</span>
-            15s
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Zone: Hand + HUD */}
-      <div className="flex-1 flex flex-col justify-end items-center relative z-20 pb-2 sm:pb-6 pointer-events-none w-full min-h-[140px] sm:min-h-[200px]">
-        
-        {/* Player HUD - Absolute bottom left */}
-        <div className="absolute bottom-2 sm:bottom-6 left-2 sm:left-6 pointer-events-auto flex items-end gap-3 z-30">
-          <div className={`bg-[#111]/90 backdrop-blur-md border ${isMyTurn ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.2)]' : 'border-white/10'} p-2 pr-4 sm:pr-6 rounded-2xl flex items-center gap-3 transition-all`}>
-            <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center border ${isMyTurn ? 'bg-gradient-to-tr from-[#ff1744] via-[#ffea00] to-[#2979ff] animate-spin-slow' : 'bg-zinc-800 border-white/5'}`}>
-              <div className="w-[85%] h-[85%] bg-black rounded-lg flex items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isMyTurn ? 'text-white' : 'text-zinc-400'}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+         {/* 2. CENTER TABLE ZONE */}
+         <div className="relative w-full flex flex-col items-center justify-center z-10 my-2 sm:my-4">
+            <div className="pointer-events-auto relative z-20">
+              <CenterTable 
+                topCard={topCard}
+                drawPileCount={state.drawPileCount}
+                stackValue={state.stackValue}
+                currentColor={state.currentColor}
+                direction={state.direction}
+                onDraw={handleDraw}
+                canDraw={isMyTurn && !state.playerWhoDrew}
+              />
+            </div>
+            
+            {/* Turn Indicator directly below table */}
+            <div className="flex items-center justify-center gap-3 sm:gap-4 transition-opacity duration-300 pointer-events-auto mt-4 z-20">
+              <div className={`px-4 sm:px-6 py-1.5 sm:py-2 rounded-full border-2 font-black text-[10px] sm:text-[12px] tracking-widest flex items-center gap-2 ${isMyTurn ? 'border-yellow-400 text-yellow-400 bg-black/80 shadow-[0_0_15px_rgba(250,204,21,0.4)]' : 'border-zinc-700 text-zinc-400 bg-black/60'}`}>
+                <span className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-current flex items-center justify-center text-[8px] sm:text-[10px]">
+                  {isMyTurn ? 'T' : 'E'}
+                </span>
+                {isMyTurn ? 'TU TURNO' : 'ESPERANDO'}
+              </div>
+              <div className="px-4 sm:px-5 py-1.5 sm:py-2 rounded-full border-2 border-zinc-700 bg-black/60 text-white font-bold text-[10px] sm:text-[12px] tracking-widest flex items-center gap-2">
+                <span className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-zinc-500 flex items-center justify-center text-[8px] sm:text-[10px]">L</span>
+                15s
               </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-[9px] sm:text-[10px] text-white font-black tracking-widest flex items-center gap-1">TÚ</span>
-              <span className="text-[10px] sm:text-xs text-zinc-400 truncate max-w-[100px] font-bold">{myPlayer.name}</span>
-              <span className="text-[9px] text-zinc-500 font-bold tracking-widest mt-0.5">{myPlayer.cardCount} CARTAS</span>
-            </div>
-          </div>
-        </div>
+         </div>
 
-        {/* The Hand */}
-        <div className="pointer-events-auto w-full relative z-20">
-          <UnoHand 
-            cards={state.myHand || []}
-            playableCardId={state.drawnCardPlayable?.id}
-            selectedCardId={selectedCardId}
-            onSelectCard={handleCardClick}
-            isMyTurn={isMyTurn && !myPlayer.isEliminated}
-            currentColor={state.currentColor}
-            topCardValue={topCard?.value as string}
-            stackValue={state.stackValue}
-          />
-        </div>
+         {/* 3. PLAYER HAND ZONE */}
+         <div className="pointer-events-auto w-full flex flex-col items-center mt-2 relative z-20">
+            {/* TÚ HUD (Directly above the hand, left aligned) */}
+            <div className="w-full flex justify-start px-2 sm:px-8 mb-1 sm:mb-4">
+               <div className={`bg-[#111]/90 backdrop-blur-md border ${isMyTurn ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.2)]' : 'border-white/10'} p-1.5 pr-4 sm:p-2 sm:pr-6 rounded-xl flex items-center gap-2 sm:gap-3 transition-all`}>
+                  <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center border ${isMyTurn ? 'bg-gradient-to-tr from-[#ff1744] via-[#ffea00] to-[#2979ff] animate-spin-slow border-transparent' : 'bg-zinc-800 border-white/5'}`}>
+                    <div className="w-[85%] h-[85%] bg-black rounded flex items-center justify-center">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isMyTurn ? 'text-white' : 'text-zinc-400'}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <span className="text-[9px] sm:text-[10px] text-white font-black tracking-widest flex items-center gap-1">TÚ</span>
+                    <span className="text-[10px] sm:text-xs text-zinc-400 truncate max-w-[100px] font-bold leading-tight">{myPlayer.name}</span>
+                    <span className="text-[8px] sm:text-[9px] text-zinc-500 font-bold tracking-widest mt-0.5">{myPlayer.cardCount} CARTAS</span>
+                  </div>
+               </div>
+            </div>
+
+            {/* The actual Hand */}
+            <div className="w-full relative z-20 pointer-events-none">
+              <div className="pointer-events-auto">
+                <UnoHand 
+                  cards={state.myHand || []}
+                  playableCardId={state.drawnCardPlayable?.id}
+                  selectedCardId={selectedCardId}
+                  onSelectCard={handleCardClick}
+                  isMyTurn={isMyTurn && !myPlayer.isEliminated}
+                  currentColor={state.currentColor}
+                  topCardValue={topCard?.value as string}
+                  stackValue={state.stackValue}
+                />
+              </div>
+            </div>
+         </div>
       </div>
 
       {/* Overlays & Interactivity */}

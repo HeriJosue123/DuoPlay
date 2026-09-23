@@ -50,14 +50,12 @@ export const UnoCard: React.FC<UnoCardProps> = ({
 
   if (isBack) {
     return (
-      <div className={`${baseClasses} bg-[#111] border-zinc-800 overflow-hidden group`} style={style} onClick={onClick}>
-        <div className="absolute inset-2 border border-zinc-700/50 rounded-lg flex items-center justify-center bg-gradient-to-br from-zinc-800 to-black">
-          <div className="transform -rotate-[15deg]">
-            <span className="text-zinc-600 font-black tracking-tighter text-xl sm:text-3xl lg:text-5xl drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">UNO</span>
-          </div>
+      <div className={`${baseClasses} bg-[#ff1744] border-white overflow-hidden group shadow-[inset_0_0_8px_rgba(0,0,0,0.3)]`} style={style} onClick={onClick}>
+        <div className="absolute inset-1.5 sm:inset-2 border-2 sm:border-4 border-[#ffea00] rounded-full flex items-center justify-center bg-[#ff1744] shadow-lg transform -rotate-[15deg]">
+          <div className="absolute inset-0 rounded-full shadow-[inset_0_0_10px_rgba(0,0,0,0.4)]" />
+          <span className="text-white font-black tracking-tighter text-xl sm:text-3xl lg:text-4xl drop-shadow-[2px_2px_0_rgba(0,0,0,0.8)] z-10">UNO</span>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
-        <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent pointer-events-none" />
       </div>
     );
   }

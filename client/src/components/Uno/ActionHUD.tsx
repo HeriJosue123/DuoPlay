@@ -22,16 +22,16 @@ export const ActionHUD: React.FC<ActionHUDProps> = ({
   if (!canICallUno && vulnerableOpponents.length === 0) return null;
 
   return (
-    <div className="fixed bottom-32 sm:bottom-40 right-4 sm:right-8 flex flex-col gap-3 z-50">
+    <div className="fixed bottom-[140px] sm:bottom-[180px] left-1/2 -translate-x-1/2 flex flex-col gap-3 z-[60] items-center pointer-events-auto">
       
       {/* Call UNO Button */}
       {canICallUno && (
         <button 
           onClick={onCallUno}
-          className="bg-red-600 hover:bg-red-500 text-white font-black tracking-widest text-lg sm:text-xl px-6 py-4 rounded-full shadow-[0_0_30px_rgba(220,38,38,0.8)] border-4 border-white transform transition-all hover:scale-110 active:scale-95 flex items-center gap-2 animate-bounce"
+          className="bg-red-600 hover:bg-red-500 text-white font-black tracking-widest text-lg sm:text-xl px-8 py-4 rounded-full shadow-[0_0_30px_rgba(220,38,38,0.8)] border-4 border-white transform transition-all hover:scale-110 active:scale-95 flex items-center justify-center gap-2 animate-bounce"
         >
           <BellRing size={24} />
-          UNO!
+          ¡UNO!
         </button>
       )}
 
