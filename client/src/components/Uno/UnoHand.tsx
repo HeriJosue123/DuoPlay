@@ -59,7 +59,7 @@ export const UnoHand: React.FC<UnoHandProps> = ({
   };
 
   return (
-    <div className="w-full flex justify-center items-end px-2 mx-auto h-[110px] sm:h-[160px] max-w-[900px] pointer-events-none">
+    <div className="w-full flex justify-center items-end px-2 mx-auto h-[120px] sm:h-[180px] max-w-[900px] pointer-events-none pb-4">
       {cards.map((card, idx) => {
         const isPlayable = checkPlayable(card);
         const isSelected = selectedCardId === card.id;
@@ -74,11 +74,11 @@ export const UnoHand: React.FC<UnoHandProps> = ({
         return (
           <div 
             key={card.id}
-            className={`relative pointer-events-auto h-full group ${isLast ? 'shrink-0' : 'shrink'} basis-[64px] sm:basis-[96px] transition-all duration-300`}
-            style={{ minWidth: '15px' }} // Ensures cards remain selectable even with 20+ cards
+            className={`relative pointer-events-auto h-full group ${isLast ? 'shrink-0' : 'shrink'} basis-[56px] sm:basis-[96px] transition-all duration-300`}
+            style={{ minWidth: '12px' }} // Ensures cards remain selectable even with 20+ cards
           >
             <div 
-              className="absolute bottom-0 left-0 w-[64px] h-[96px] sm:w-[96px] sm:h-[144px] origin-bottom transition-transform duration-200"
+              className="absolute bottom-0 left-0 w-[56px] h-[84px] sm:w-[96px] sm:h-[144px] origin-bottom transition-transform duration-200"
               style={{
                 transform: `rotate(${rotation}deg) translateY(${transY}px)`,
                 zIndex: isSelected ? 50 : idx,

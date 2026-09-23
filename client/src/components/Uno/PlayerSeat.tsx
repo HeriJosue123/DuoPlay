@@ -92,25 +92,25 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isCurrentTurn, p
 
       {/* Avatar Container */}
       <div className="flex flex-col items-center z-10">
-        <div className={`relative p-0.5 rounded-full ${isCurrentTurn && !isEliminated && connected ? 'bg-gradient-to-tr from-[#ff1744] via-[#ffea00] to-[#2979ff] animate-spin-slow shadow-[0_0_15px_rgba(255,234,0,0.4)]' : 'bg-transparent'}`}>
-          <div className={`bg-[#0a0a0a] w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center rounded-full border border-white/10 ${isCurrentTurn && !isEliminated && connected ? 'animate-reverse-spin' : ''} shadow-inner`}>
+        <div className={`relative p-[2px] rounded-full ${isCurrentTurn && !isEliminated && connected ? 'bg-gradient-to-tr from-[#ff1744] via-[#ffea00] to-[#2979ff] animate-spin-slow shadow-[0_0_10px_rgba(255,234,0,0.4)]' : 'bg-transparent'}`}>
+          <div className={`bg-[#0a0a0a] w-10 h-10 sm:w-16 sm:h-16 flex items-center justify-center rounded-full border border-white/10 ${isCurrentTurn && !isEliminated && connected ? 'animate-reverse-spin' : ''} shadow-inner`}>
             {isEliminated ? (
-              <Skull size={24} className="text-zinc-600" />
+              <Skull className="text-zinc-600 w-5 h-5 sm:w-6 sm:h-6" />
             ) : (
-              <User size={24} className={`${isCurrentTurn ? 'text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]' : 'text-zinc-500'} ${!connected ? 'opacity-30' : ''}`} />
+              <User className={`w-5 h-5 sm:w-6 sm:h-6 ${isCurrentTurn ? 'text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]' : 'text-zinc-500'} ${!connected ? 'opacity-30' : ''}`} />
             )}
           </div>
         </div>
 
         {/* Nameplate */}
-        <div className="mt-3 flex flex-col items-center">
-          <span className={`bg-black/50 backdrop-blur-sm border border-white/5 px-3 py-0.5 rounded-full text-white font-bold text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[120px] shadow-md ${!connected ? 'text-zinc-500 line-through' : ''}`}>
+        <div className="mt-1 sm:mt-3 flex flex-col items-center">
+          <span className={`bg-black/80 backdrop-blur-sm border border-white/5 px-2 sm:px-3 py-0.5 rounded-full text-white font-bold text-[9px] sm:text-sm truncate max-w-[80px] sm:max-w-[120px] shadow-md ${!connected ? 'text-zinc-500 line-through' : ''}`}>
             {name}
           </span>
-          <span className="text-[10px] text-zinc-400 font-bold tracking-widest mt-1">
-            {cardCount} cartas
+          <span className="text-[8px] sm:text-[10px] text-zinc-400 font-bold tracking-widest mt-0.5">
+            {cardCount} CARTAS
           </span>
-          {!connected && <span className="text-[9px] text-red-500 uppercase tracking-widest mt-0.5">DISCONNECTED</span>}
+          {!connected && <span className="text-[7px] sm:text-[9px] text-red-500 uppercase tracking-widest mt-0.5">DESC</span>}
         </div>
       </div>
 
