@@ -238,5 +238,9 @@ export class SocketManager {
     socket.on('ready_for_offer', (data: { roomId: string, from: string }) => {
       socket.to(data.roomId).emit('ready_for_offer', data);
     });
+
+    socket.on('voice_status', (data: { roomId: string, playerId: string, isMuted: boolean }) => {
+      socket.to(data.roomId).emit('voice_status', data);
+    });
   }
 }

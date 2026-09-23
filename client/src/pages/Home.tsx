@@ -35,6 +35,8 @@ export const Home = () => {
     if (!name.trim()) return setError('Ingresa tu nombre');
     if (!socket) return setError('Sin conexión al servidor');
 
+    localStorage.setItem('duoplay_playerName', name.trim());
+
     socket.emit('create_room', { playerName: name, playerId, maxPlayers }, (response: any) => {
       if (response.success) {
         localStorage.setItem('duoplay_roomId', response.room.roomId);
@@ -49,6 +51,8 @@ export const Home = () => {
     if (!name.trim()) return setError('Ingresa tu nombre');
     if (roomCode.length !== 6) return setError('Código debe tener 6 caracteres');
     if (!socket) return setError('Sin conexión al servidor');
+
+    localStorage.setItem('duoplay_playerName', name.trim());
 
     socket.emit('join_room', { playerName: name, roomId: roomCode, playerId }, (response: any) => {
       if (response.success) {

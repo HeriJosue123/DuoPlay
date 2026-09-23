@@ -81,6 +81,10 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
         track.enabled = false;
       });
       setIsMuted(true);
+      
+      if (socket) {
+        socket.emit('voice_status', { roomId, playerId, isMuted: true });
+      }
 
       console.log('[WebRTC] Creating RTCPeerConnection...');
       const pc = new RTCPeerConnection({
@@ -324,9 +328,14 @@ export const useVoiceChat = ({ roomId, playerId, socket, isActive, isInitiator }
           track.enabled = !nextMuted;
         });
       }
+      
+      if (socket) {
+        socket.emit('voice_status', { roomId, playerId, isMuted: nextMuted });
+      }
+      
       return nextMuted;
     });
-  }, []);
+  }, [socket, roomId, playerId]);
 
   return {
     voiceState,
