@@ -169,8 +169,8 @@ export const RoomView = () => {
             <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: `linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 1) 25%, rgba(255, 255, 255, 1) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, 1) 75%, rgba(255, 255, 255, 1) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 1) 25%, rgba(255, 255, 255, 1) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, 1) 75%, rgba(255, 255, 255, 1) 76%, transparent 77%, transparent)`, backgroundSize: '50px 50px' }} />
             <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[800px] bg-[radial-gradient(ellipse_at_center,_rgba(37,99,235,0.15)_0%,_transparent_70%)]" />
             <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-[600px] h-[800px] bg-[radial-gradient(ellipse_at_center,_rgba(220,38,38,0.12)_0%,_transparent_70%)]" />
-            <div className="absolute -top-[20%] left-[10%] w-[2px] h-[140%] bg-blue-500 rotate-[35deg] shadow-[0_0_20px_#3b82f6,0_0_40px_#3b82f6] opacity-20 sm:opacity-80" />
-            <div className="absolute -top-[20%] right-[10%] w-[2px] h-[140%] bg-red-500 rotate-[-35deg] shadow-[0_0_20px_#ef4444,0_0_40px_#ef4444] opacity-20 sm:opacity-80" />
+            <div className="absolute -top-[20%] left-[10%] w-[2px] h-[140%] bg-blue-500 rotate-[35deg] opacity-20 sm:opacity-80" />
+            <div className="absolute -top-[20%] right-[10%] w-[2px] h-[140%] bg-red-500 rotate-[-35deg] opacity-20 sm:opacity-80" />
             
             <div className="hidden lg:block">
               <div className="absolute top-[12%] left-[15%] rotate-[-15deg] scale-90 drop-shadow-[0_20px_35px_rgba(0,0,0,0.8)] opacity-95">
