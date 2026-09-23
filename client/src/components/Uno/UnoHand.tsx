@@ -59,57 +59,43 @@ export const UnoHand: React.FC<UnoHandProps> = ({
   };
 
   return (
-    <div className="relative w-full flex justify-center items-end px-2 sm:px-8 h-40 sm:h-60 mb-2 sm:mb-4 pointer-events-none">
-      <div className="flex justify-center items-end relative pointer-events-auto" style={{ width: '100%', maxWidth: '900px' }}>
+    <div className="relative w-full flex justify-center items-end px-2 sm:px-8 h-[140px] sm:h-[200px] mb-2 sm:mb-4 pointer-events-none">
+      <div 
+        ref={scrollRef}
+        className="flex justify-center items-end relative pointer-events-auto h-full w-full max-w-[800px]"
+      >
         {cards.map((card, index) => {
           const isPlayable = checkPlayable(card);
           const isSelected = selectedCardId === card.id;
           
-          // Card scaling based on total cards
-          const scaleFactor = cards.length > 20 ? 0.6 : cards.length > 14 ? 0.75 : cards.length > 8 ? 0.9 : 1;
-          const baseCardWidth = typeof window !== 'undefined' && window.innerWidth < 640 ? 60 : 100;
-          const effectiveWidth = baseCardWidth * scaleFactor;
+          const maxOverlap = 70;
+          const baseOverlap = cards.length > 5 ? Math.min(maxOverlap, (cards.length - 5) * 4 + 10) : (cards.length > 1 ? 5 : 0);
+          const marginStr = index === 0 ? '0' : `-${baseOverlap}%`;
           
-          // Overlap math
-          const maxContainerWidth = typeof window !== 'undefined' ? Math.min(window.innerWidth * 0.9, 900) : 900;
-          const totalIdealWidth = cards.length * effectiveWidth;
-          
-          // If total width exceeds container, we overlap them tightly.
-          // We use negative margins.
-          let marginPx = 0;
-          if (totalIdealWidth > maxContainerWidth && cards.length > 1) {
-             const excess = totalIdealWidth - maxContainerWidth;
-             marginPx = -(excess / (cards.length - 1)) - (effectiveWidth * 0.1); 
-          } else {
-             // Default comfortable overlap
-             marginPx = cards.length > 1 ? -(effectiveWidth * 0.2) : 0;
-          }
-
-          // Generate a subtle fan effect
           const mid = (cards.length - 1) / 2;
           const distance = index - mid;
-          const rotation = distance * (cards.length > 15 ? 1 : 2.5);
-          const translateY = Math.abs(distance) * (cards.length > 15 ? 1 : 2);
+          const rotation = distance * (cards.length > 12 ? 1 : 2.5);
+          const translateY = Math.abs(distance) * (cards.length > 12 ? 1 : 2);
           
           return (
             <div 
               key={card.id}
-              className="transition-all duration-300 ease-out origin-bottom hover:z-[60]"
+              className="relative transition-all duration-300 ease-out origin-bottom hover:z-[60]"
               style={{ 
-                marginLeft: index === 0 ? 0 : `${marginPx}px`,
-                transform: `rotate(${rotation}deg) translateY(${translateY}px) scale(${scaleFactor})`,
+                marginLeft: marginStr,
+                transform: `rotate(${rotation}deg) translateY(${translateY}px)`,
                 zIndex: isSelected ? 50 : index,
-                flexShrink: 0 // Prevent CSS flex from distorting the card aspect ratio
               }}
             >
-              <UnoCard 
-                card={card}
-                isPlayable={isPlayable}
-                isSelected={isSelected}
-                onClick={() => isPlayable && onSelectCard(card.id)}
-                size="lg" // We use lg but scale it down via transform scale()
-                className={isSelected ? '!scale-110' : 'hover:-translate-y-8'}
-              />
+              <div className="w-[56px] h-[84px] sm:w-[96px] sm:h-[144px] md:w-[112px] md:h-[168px]">
+                <UnoCard 
+                  card={card}
+                  isPlayable={isPlayable}
+                  isSelected={isSelected}
+                  onClick={() => isPlayable && onSelectCard(card.id)}
+                  className={`!w-full !h-full ${isSelected ? '!scale-110 -translate-y-4 sm:-translate-y-8' : 'hover:-translate-y-4 sm:hover:-translate-y-8'}`}
+                />
+              </div>
             </div>
           );
         })}

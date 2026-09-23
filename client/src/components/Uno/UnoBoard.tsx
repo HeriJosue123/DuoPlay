@@ -58,42 +58,47 @@ export const UnoBoard: React.FC<UnoBoardProps> = ({ room }) => {
   const myPlayer = state.players[myPlayerIndex];
   const isMyTurn = state.status === 'playing' && state.currentTurnIndex === myPlayerIndex;
 
-  // Arrange opponents dynamically in a circle/arc
+  const getOpponentData = (sanitizedPlayer: any) => {
+    if (!sanitizedPlayer) return null;
+    const oppFull = room.players.find((p: any) => p.id === sanitizedPlayer.id);
+    return { ...sanitizedPlayer, connected: oppFull?.connected ?? true };
+  };
+
+  const len = state.players.length;
+  
   const opponents = [];
   const numOpponents = state.players.length - 1;
   for (let i = 1; i <= numOpponents; i++) {
     const oppIndex = (myPlayerIndex + i) % state.players.length;
-    const oppSanitized = state.players[oppIndex];
-    const oppFull = room.players.find((p: any) => p.id === oppSanitized.id);
-    opponents.push({ ...oppSanitized, connected: oppFull?.connected ?? true });
+    opponents.push(getOpponentData(state.players[oppIndex]));
   }
 
-  const getPositionClass = (index: number, total: number) => {
-    // Distribute around the top half of the screen
-    if (total === 1) return "top-[10%] left-1/2 -translate-x-1/2"; // 1 opponent -> top center
-    if (total === 2) {
-      if (index === 0) return "top-[20%] left-[10%]";
-      if (index === 1) return "top-[20%] right-[10%]";
+  const oppLeft = getOpponentData(len >= 3 ? state.players[(myPlayerIndex + 1) % len] : null);
+  const oppTop = getOpponentData(
+    len === 2 ? state.players[(myPlayerIndex + 1) % len] :
+    len >= 3 ? state.players[(myPlayerIndex + 2) % len] : null
+  );
+  const oppRight = getOpponentData(len === 4 ? state.players[(myPlayerIndex + 3) % len] : null);
+
+  const renderSeat = (opp: any, positionClass: string) => {
+    if (!opp) {
+      return (
+        <div className={`absolute flex flex-col items-center opacity-30 ${positionClass}`}>
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/5 rounded-full border border-white/10 flex items-center justify-center border-dashed">
+            <span className="text-white/30 text-[9px] sm:text-[10px] font-bold text-center leading-tight">SIN<br/>JUGADOR</span>
+          </div>
+        </div>
+      );
     }
-    if (total === 3) {
-      if (index === 0) return "top-[40%] left-[5%]";
-      if (index === 1) return "top-[10%] left-1/2 -translate-x-1/2";
-      if (index === 2) return "top-[40%] right-[5%]";
-    }
-    if (total === 4) {
-      if (index === 0) return "top-[40%] left-[5%]";
-      if (index === 1) return "top-[15%] left-[25%]";
-      if (index === 2) return "top-[15%] right-[25%]";
-      if (index === 3) return "top-[40%] right-[5%]";
-    }
-    if (total === 5) {
-      if (index === 0) return "top-[50%] left-[2%]";
-      if (index === 1) return "top-[20%] left-[15%]";
-      if (index === 2) return "top-[5%] left-1/2 -translate-x-1/2";
-      if (index === 3) return "top-[20%] right-[15%]";
-      if (index === 4) return "top-[50%] right-[2%]";
-    }
-    return "top-[10%] left-1/2 -translate-x-1/2"; // fallback
+    
+    return (
+      <PlayerSeat 
+        player={opp} 
+        isCurrentTurn={state.status === 'playing' && state.players[state.currentTurnIndex].id === opp.id}
+        positionClass={positionClass}
+        connected={opp.connected}
+      />
+    );
   };
 
   const handleCardClick = (cardId: string) => {
@@ -191,16 +196,9 @@ export const UnoBoard: React.FC<UnoBoardProps> = ({ room }) => {
 
       {/* Opponents */}
       <div className="absolute inset-0 pointer-events-none">
-        {opponents.map((opp, idx) => (
-          <div key={opp.id} className="pointer-events-auto">
-            <PlayerSeat 
-              player={opp} 
-              isCurrentTurn={state.status === 'playing' && state.players[state.currentTurnIndex].id === opp.id}
-              positionClass={getPositionClass(idx, numOpponents)}
-              connected={opp.connected}
-            />
-          </div>
-        ))}
+        <div className="pointer-events-auto">{renderSeat(oppLeft, "top-[35%] sm:top-[40%] left-[2%] sm:left-[10%]")}</div>
+        <div className="pointer-events-auto">{renderSeat(oppTop, "top-[5%] sm:top-[8%] left-1/2 -translate-x-1/2")}</div>
+        <div className="pointer-events-auto">{renderSeat(oppRight, "top-[35%] sm:top-[40%] right-[2%] sm:right-[10%]")}</div>
       </div>
 
       {/* Center Table */}
@@ -232,14 +230,17 @@ export const UnoBoard: React.FC<UnoBoardProps> = ({ room }) => {
       <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none flex flex-col justify-end">
         
         {/* Bottom HUD Layer */}
-        <div className="absolute bottom-6 left-6 pointer-events-auto flex items-end gap-4 z-50">
-          <div className="bg-[#111]/80 backdrop-blur-xl border border-white/10 p-2 pr-6 rounded-2xl shadow-xl flex items-center gap-4 group">
-            <div className="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center border border-white/5">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 pointer-events-auto flex items-end gap-4 z-50">
+          <div className={`bg-[#111]/80 backdrop-blur-xl border ${isMyTurn ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.2)]' : 'border-white/10 shadow-xl'} p-2 pr-6 rounded-2xl flex items-center gap-3 sm:gap-4 transition-all`}>
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center border ${isMyTurn ? 'bg-gradient-to-tr from-[#ff1744] via-[#ffea00] to-[#2979ff] animate-spin-slow border-transparent' : 'bg-zinc-800 border-white/5'}`}>
+              <div className="w-[90%] h-[90%] bg-black rounded-lg flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isMyTurn ? 'text-white' : 'text-zinc-400'}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-white font-black tracking-widest flex items-center gap-1">TÚ <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.8)] inline-block"></span></span>
-              <span className="text-xs text-zinc-400 truncate max-w-[120px] font-bold">{myPlayer.name}</span>
+              <span className="text-[10px] sm:text-xs text-white font-black tracking-widest flex items-center gap-1">TÚ <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.8)] inline-block"></span></span>
+              <span className="text-[10px] sm:text-xs text-zinc-400 truncate max-w-[120px] font-bold">{myPlayer.name}</span>
+              <span className="text-[9px] text-zinc-500 font-bold tracking-widest mt-0.5">{myPlayer.cardCount} CARTAS</span>
             </div>
           </div>
           

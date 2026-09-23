@@ -104,49 +104,40 @@ export const RoomVoice: React.FC<Props> = ({ room }) => {
       )}
 
       <div className="flex items-center gap-2">
-        <div className="text-[9px] font-bold tracking-widest uppercase text-slate-400 drop-shadow-md bg-black/40 px-2 py-1 rounded">
-          {!isActive && 'Esperando voz...'}
-          {isActive && voiceState === 'idle' && 'Iniciando...'}
-          {voiceState === 'connecting' && 'Conectando...'}
-          {voiceState === 'requesting' && 'Pidiendo permiso...'}
-          {voiceState === 'no-permission' && <span className="text-red-400">Sin acceso</span>}
-          {voiceState === 'connected' && (
-            isMuted ? 'Micrófono apagado' : <span className="text-green-400">Voz conectada</span>
-          )}
-          {voiceState === 'error' && <span className="text-red-400">Error de red</span>}
-        </div>
-
         <button
           onClick={voiceState === 'no-permission' ? retryAccess : toggleMute}
           disabled={!isActive || voiceState === 'requesting' || voiceState === 'connecting' || voiceState === 'error'}
-          title={
-            !isActive ? "WebRTC actual soporta exactamente 2 jugadores simultáneos." 
-            : voiceState === 'no-permission' ? "Reintentar permiso" 
-            : isMuted ? "Activar micrófono" 
-            : "Silenciar"
-          }
-          className={`relative p-3 rounded-full transition-all backdrop-blur-md active:scale-95 border
+          className={`flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full border text-[10px] sm:text-xs font-black tracking-widest uppercase transition-all backdrop-blur-md active:scale-95
             ${!isActive
               ? 'bg-black/50 border-[#222] text-slate-600 cursor-not-allowed'
               : voiceState === 'no-permission' || voiceState === 'error'
               ? 'bg-red-900/50 border-red-500/50 text-red-500 hover:bg-red-900/80' 
               : isMuted 
                 ? 'bg-slate-800/80 border-slate-700 text-slate-400 hover:bg-slate-700/80' 
-                : 'bg-[#111] border-[#333] text-white hover:bg-[#222]'
+                : 'bg-green-900/20 border-green-500/30 text-white shadow-[0_0_15px_rgba(34,197,94,0.15)] hover:bg-green-900/40'
             }
           `}
         >
-          {!isMuted && voiceState === 'connected' && (
-            <div className="absolute inset-0 rounded-full border-2 border-green-500/50 shadow-[0_0_10px_rgba(74,222,128,0.3)]" />
+          {voiceState === 'no-permission' || voiceState === 'error' ? (
+            <AlertCircle size={14} className="sm:w-4 sm:h-4" />
+          ) : isMuted ? (
+            <MicOff size={14} className="sm:w-4 sm:h-4" />
+          ) : (
+            <Mic size={14} className="text-green-400 sm:w-4 sm:h-4" />
           )}
 
-          {voiceState === 'no-permission' || voiceState === 'error' ? (
-            <AlertCircle size={18} />
-          ) : isMuted ? (
-            <MicOff size={18} />
-          ) : (
-            <Mic size={18} className="text-green-400" />
-          )}
+          <span className="hidden sm:inline">
+            {!isActive && 'ESPERANDO VOZ...'}
+            {isActive && voiceState === 'idle' && 'INICIANDO...'}
+            {voiceState === 'connecting' && 'CONECTANDO...'}
+            {voiceState === 'requesting' && 'PERMISO...'}
+            {voiceState === 'no-permission' && 'SIN ACCESO'}
+            {voiceState === 'connected' && (isMuted ? 'MIC APAGADO' : 'VOZ: ON')}
+            {voiceState === 'error' && 'ERROR'}
+          </span>
+          <span className="sm:hidden">
+            {voiceState === 'connected' ? (isMuted ? 'OFF' : 'ON') : '...'}
+          </span>
         </button>
       </div>
     </div>
