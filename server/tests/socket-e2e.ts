@@ -1,7 +1,7 @@
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { io as Client } from 'socket.io-client';
-import { SocketManager } from './socket/SocketManager';
+import { SocketManager } from '../src/socket/SocketManager';
 
 async function runE2E() {
   console.log('Starting E2E Socket Integration Tests...');
