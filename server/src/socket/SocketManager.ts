@@ -1,21 +1,18 @@
 import { Server, Socket } from 'socket.io';
 import { RoomManager } from '../rooms/RoomManager';
-import { TicTacToe } from '../games/TicTacToe';
-import { MemoryMatch } from '../games/MemoryMatch';
-import type { Player, Room, ChatMessage } from '../types';
+import { UnoEngine } from '../games/UnoEngine';
+import type { Player, Room, ChatMessage, UnoColor } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export class SocketManager {
   private io: Server;
   private roomManager: RoomManager;
-  private ticTacToe: TicTacToe;
-  private memoryMatch: MemoryMatch;
+  private unoEngine: UnoEngine;
 
   constructor(io: Server) {
     this.io = io;
     this.roomManager = new RoomManager();
-    this.ticTacToe = new TicTacToe();
-    this.memoryMatch = new MemoryMatch();
+    this.unoEngine = new UnoEngine();
 
     this.io.on('connection', (socket: Socket) => {
       console.log('User connected:', socket.id);
@@ -23,15 +20,37 @@ export class SocketManager {
     });
   }
 
+  private emitSanitizedState(roomId: string) {
+    const room = this.roomManager.getRoom(roomId);
+    if (!room || !room.gameState) return;
+    
+    room.players.forEach(p => {
+      const safeState = this.unoEngine.getSanitizedState(room, p.id);
+      this.io.to(p.socketId).emit('game_state_updated', safeState);
+    });
+  }
+
+  private broadcastRoomUpdate(room: Room, event: string) {
+    // Emits the room object to all players, but sanitizes the gameState per player if it exists
+    room.players.forEach(p => {
+      const roomCopy = { ...room };
+      if (roomCopy.gameState) {
+        roomCopy.gameState = this.unoEngine.getSanitizedState(room, p.id) as any;
+      }
+      this.io.to(p.socketId).emit(event, roomCopy);
+    });
+  }
+
   private handleConnection(socket: Socket) {
-    socket.on('create_room', (data: { playerName: string, playerId: string }, callback) => {
+    socket.on('create_room', (data: { playerName: string, playerId: string, maxPlayers: number }, callback) => {
       const player: Player = {
         id: data.playerId,
         name: data.playerName,
         socketId: socket.id,
         connected: true
       };
-      const room = this.roomManager.createRoom(player, 3); // Default 3 rounds for games
+      
+      const room = this.roomManager.createRoom(player, data.maxPlayers || 4);
       socket.join(room.roomId);
       console.log(`Room created: ${room.roomId} by ${player.name}`);
       callback({ success: true, room });
@@ -51,67 +70,104 @@ export class SocketManager {
         socket.join(result.room.roomId);
         console.log(`Player ${player.name} joined/rejoined room ${result.room.roomId}`);
         
-        socket.to(result.room.roomId).emit('player_joined', result.room);
+        const room = result.room;
+        this.broadcastRoomUpdate(room, 'player_joined');
+        
+        // Auto-start game logic
+        // If room is full, start the game. Or wait for explicit 'start_game' event?
+        // User requested: "Cuando haya jugadores suficientes: permitir iniciar." via a button in the lobby.
+        // For now, let's just emit player_joined. The explicit start_game event will trigger UnoEngine.
+        
+        if (room.gameState) {
+          // Reconnection scenario: send the sanitized state directly to the rejoining player
+          const safeState = this.unoEngine.getSanitizedState(room, player.id);
+          socket.emit('game_state_updated', safeState);
+        }
+
         callback({ success: true, room: result.room });
       } else {
         callback({ success: false, message: result.message });
       }
     });
 
-    socket.on('propose_game', (data: { roomId: string, playerId: string, gameId: 'tic-tac-toe' | 'memory-match' }, callback) => {
+    socket.on('start_game', (data: { roomId: string, playerId: string }, callback) => {
       const room = this.roomManager.getRoom(data.roomId);
       if (!room) return callback && callback({ success: false, message: 'Room not found' });
-      if (!room.players.some(p => p.id === data.playerId)) return callback && callback({ success: false, message: 'Unauthorized' });
-      if (room.activeGame) return callback && callback({ success: false, message: 'Game already active' });
-      if (room.gameProposal) return callback && callback({ success: false, message: 'Proposal already exists' });
+      // Usually only host (players[0]) can start, but let's allow any for now or verify
+      if (room.players[0].id !== data.playerId) return callback && callback({ success: false, message: 'Only host can start' });
+      if (room.players.length < 2) return callback && callback({ success: false, message: 'Need at least 2 players' });
 
-      room.gameProposal = { gameId: data.gameId, from: data.playerId };
-      this.io.to(room.roomId).emit('game_proposed', room);
-      if (callback) callback({ success: true });
-    });
-
-    socket.on('accept_game', (data: { roomId: string, playerId: string }, callback) => {
-      const room = this.roomManager.getRoom(data.roomId);
-      if (!room) return callback && callback({ success: false, message: 'Room not found' });
-      if (!room.players.some(p => p.id === data.playerId)) return callback && callback({ success: false, message: 'Unauthorized' });
-      if (!room.gameProposal) return callback && callback({ success: false, message: 'No game proposed' });
-      if (room.gameProposal.from === data.playerId) return callback && callback({ success: false, message: 'You cannot accept your own proposal' });
-      if (room.players.length !== 2) return callback && callback({ success: false, message: 'Need 2 players to start' });
-
-      room.activeGame = room.gameProposal.gameId as any;
-      room.gameProposal = null;
-
-      if (room.activeGame === 'memory-match') {
-        this.memoryMatch.initGame(room);
-      } else {
-        this.ticTacToe.initGame(room);
-      }
-      this.io.to(room.roomId).emit('game_started', room);
-      if (callback) callback({ success: true });
-    });
-
-    socket.on('cancel_proposal', (data: { roomId: string, playerId: string }, callback) => {
-      const room = this.roomManager.getRoom(data.roomId);
-      if (!room) return callback && callback({ success: false, message: 'Room not found' });
-      if (!room.players.some(p => p.id === data.playerId)) return callback && callback({ success: false, message: 'Unauthorized' });
+      this.unoEngine.initGame(room);
+      this.broadcastRoomUpdate(room, 'game_started');
+      this.emitSanitizedState(room.roomId); // sanitized state broadcast
       
-      room.gameProposal = null;
-      this.io.to(room.roomId).emit('proposal_cancelled', room);
       if (callback) callback({ success: true });
     });
 
-    socket.on('return_to_lobby', (data: { roomId: string, playerId: string }, callback) => {
+    socket.on('play_card', (data: { roomId: string, playerId: string, cardId: string, chosenColor?: UnoColor, targetPlayerId?: string }, callback) => {
       const room = this.roomManager.getRoom(data.roomId);
       if (!room) return callback && callback({ success: false, message: 'Room not found' });
-      if (!room.players.some(p => p.id === data.playerId)) return callback && callback({ success: false, message: 'Unauthorized' });
+      
+      const result = this.unoEngine.playCard(room, data.playerId, data.cardId, data.chosenColor, data.targetPlayerId);
+      if (result.success) {
+        this.emitSanitizedState(room.roomId);
+      }
+      if (callback) callback(result);
+    });
 
-      room.activeGame = null;
-      room.matchState = null;
-      room.gameState = null;
-      room.currentTurn = null;
+    socket.on('draw_card', (data: { roomId: string, playerId: string }, callback) => {
+      const room = this.roomManager.getRoom(data.roomId);
+      if (!room) return callback && callback({ success: false, message: 'Room not found' });
+      
+      const result = this.unoEngine.drawCard(room, data.playerId);
+      if (result.success) {
+        this.emitSanitizedState(room.roomId);
+      }
+      if (callback) callback(result);
+    });
 
-      this.io.to(room.roomId).emit('returned_to_lobby', room);
-      if (callback) callback({ success: true });
+    socket.on('pass_turn', (data: { roomId: string, playerId: string }, callback) => {
+      const room = this.roomManager.getRoom(data.roomId);
+      if (!room) return callback && callback({ success: false, message: 'Room not found' });
+      
+      const result = this.unoEngine.passTurn(room, data.playerId);
+      if (result.success) {
+        this.emitSanitizedState(room.roomId);
+      }
+      if (callback) callback(result);
+    });
+
+    socket.on('call_uno', (data: { roomId: string, playerId: string }, callback) => {
+      const room = this.roomManager.getRoom(data.roomId);
+      if (!room) return callback && callback({ success: false, message: 'Room not found' });
+      
+      const result = this.unoEngine.callUno(room, data.playerId);
+      if (result.success) {
+        this.emitSanitizedState(room.roomId);
+      }
+      if (callback) callback(result);
+    });
+
+    socket.on('catch_uno', (data: { roomId: string, playerId: string, targetId: string }, callback) => {
+      const room = this.roomManager.getRoom(data.roomId);
+      if (!room) return callback && callback({ success: false, message: 'Room not found' });
+      
+      const result = this.unoEngine.catchUno(room, data.playerId, data.targetId);
+      if (result.success) {
+        this.emitSanitizedState(room.roomId);
+      }
+      if (callback) callback(result);
+    });
+
+    socket.on('challenge_draw_four', (data: { roomId: string, playerId: string, challenge: boolean }, callback) => {
+      const room = this.roomManager.getRoom(data.roomId);
+      if (!room) return callback && callback({ success: false, message: 'Room not found' });
+      
+      const result = this.unoEngine.challengeDrawFour(room, data.playerId, data.challenge);
+      if (result.success) {
+        this.emitSanitizedState(room.roomId);
+      }
+      if (callback) callback(result);
     });
 
     socket.on('send_chat', (data: { roomId: string, playerId: string, text: string }, callback) => {
@@ -134,7 +190,7 @@ export class SocketManager {
       };
 
       room.chat.push(message);
-      this.io.to(room.roomId).emit('chat_message', room);
+      this.broadcastRoomUpdate(room, 'chat_message');
       if (callback) callback({ success: true });
     });
 
@@ -150,62 +206,10 @@ export class SocketManager {
       if (callback) callback({ success: true });
     });
 
-    socket.on('make_move', (data: { roomId: string, playerId: string, move: any }, callback) => {
-      const room = this.roomManager.getRoom(data.roomId);
-      if (!room || !room.activeGame) {
-        if (callback) callback({ success: false, message: 'Game not found' });
-        return;
-      }
-      if (!room.players.some(p => p.id === data.playerId)) return callback && callback({ success: false, message: 'Unauthorized' });
-
-      const result = room.activeGame === 'memory-match' 
-        ? this.memoryMatch.handleMove(room, data.playerId, data.move)
-        : this.ticTacToe.handleMove(room, data.playerId, data.move);
-
-      if (result.success) {
-        this.io.to(room.roomId).emit('game_state_updated', room);
-      } else {
-        socket.emit('error', result.message);
-      }
-      if (callback) callback(result);
-    });
-
-    socket.on('resolve_turn', (data: { roomId: string, playerId: string }, callback) => {
-      const room = this.roomManager.getRoom(data.roomId);
-      if (!room || room.activeGame !== 'memory-match') {
-        if (callback) callback({ success: false, message: 'Invalid resolve turn' });
-        return;
-      }
-      if (!room.players.some(p => p.id === data.playerId)) return callback && callback({ success: false, message: 'Unauthorized' });
-
-      const result = this.memoryMatch.handleResolveTurn(room, data.playerId);
-      if (result.success) {
-        this.io.to(room.roomId).emit('game_state_updated', room);
-      }
-      if (callback) callback(result);
-    });
-
-    socket.on('ready_for_next_round', (data: { roomId: string, playerId: string }, callback) => {
-      const room = this.roomManager.getRoom(data.roomId);
-      if (!room || !room.activeGame) return callback && callback({ success: false, message: 'Game not found' });
-      if (!room.players.some(p => p.id === data.playerId)) return callback && callback({ success: false, message: 'Unauthorized' });
-
-      const result = room.activeGame === 'memory-match'
-        ? this.memoryMatch.handleReady(room, data.playerId)
-        : this.ticTacToe.handleReady(room, data.playerId);
-
-      if (result.success) {
-        this.io.to(room.roomId).emit('game_state_updated', room);
-      }
-      if (callback) callback(result);
-    });
-
     socket.on('leave_room', (data: { roomId: string, playerId: string }) => {
-      // Legacy support for explicit disconnect handling if needed
-      // but 'close_session' handles intended destruction.
       const result = this.roomManager.leaveRoom(data.roomId, data.playerId);
       if (result.room && !result.wasDestroyed) {
-        socket.to(data.roomId).emit('player_left', result.room);
+        this.broadcastRoomUpdate(result.room, 'player_left');
       }
       socket.leave(data.roomId);
     });
@@ -214,12 +218,12 @@ export class SocketManager {
       const result = this.roomManager.handleDisconnect(socket.id, (room, playerId) => {
         const leaveResult = this.roomManager.leaveRoom(room.roomId, playerId);
         if (leaveResult.room && !leaveResult.wasDestroyed) {
-          this.io.to(room.roomId).emit('player_left', leaveResult.room);
+          this.broadcastRoomUpdate(leaveResult.room, 'player_left');
         }
       });
       
       if (result.room) {
-        socket.to(result.room.roomId).emit('player_disconnected', result.room);
+        this.broadcastRoomUpdate(result.room, 'player_disconnected');
       }
     });
 

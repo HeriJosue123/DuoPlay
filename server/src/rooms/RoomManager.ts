@@ -4,23 +4,25 @@ export class RoomManager {
   private rooms: Map<string, Room> = new Map();
   private disconnectTimers: Map<string, NodeJS.Timeout> = new Map();
 
-  createRoom(player: Player, totalRounds: number = 5): Room {
+  public createRoom(host: Player, maxPlayers: number = 6): Room {
     const roomId = this.generateRoomId();
-    player.connected = true;
-    const room: Room = {
+    host.connected = true;
+    // Default to maximum 6 if not explicitly provided or outside bounds
+    const validMax = Math.min(Math.max(maxPlayers, 2), 6);
+    
+    const newRoom: Room = {
       roomId,
-      players: [player],
-      activeGame: null,
-      gameProposal: null,
+      players: [host],
+      activeGame: 'uno',
       chat: [],
-      settings: { totalRounds },
+      settings: { maxPlayers: validMax },
       status: 'waiting',
       matchState: null,
       gameState: null,
       currentTurn: null,
     };
-    this.rooms.set(roomId, room);
-    return room;
+    this.rooms.set(roomId, newRoom);
+    return newRoom;
   }
 
   joinRoom(roomId: string, player: Player): { success: boolean, room?: Room, message?: string } {
@@ -38,10 +40,14 @@ export class RoomManager {
       return { success: true, room };
     }
 
-    if (room.players.length >= 2) {
+    if (room.players.length >= room.settings.maxPlayers) {
       return { success: false, message: 'Room is full' };
     }
     
+    if (room.status !== 'waiting') {
+      return { success: false, message: 'Game has already started' };
+    }
+
     player.connected = true;
     room.players.push(player);
     return { success: true, room };

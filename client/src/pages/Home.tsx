@@ -6,6 +6,7 @@ import { useSocket } from '../context/SocketContext';
 export const Home = () => {
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
+  const [maxPlayers, setMaxPlayers] = useState(4);
   const [mode, setMode] = useState<'menu' | 'create' | 'join'>('menu');
   const [error, setError] = useState('');
   const [reconnecting, setReconnecting] = useState(true);
@@ -33,12 +34,12 @@ export const Home = () => {
     if (!name.trim()) return setError('Ingresa tu nombre');
     if (!socket) return setError('Sin conexión al servidor');
 
-    socket.emit('create_room', { playerName: name, playerId }, (response: any) => {
+    socket.emit('create_room', { playerName: name, playerId, maxPlayers }, (response: any) => {
       if (response.success) {
         localStorage.setItem('duoplay_roomId', response.room.roomId);
         navigate(`/room/${response.room.roomId}`, { state: { room: response.room } });
       } else {
-        setError(response.message || 'Error al crear la sesión');
+        setError(response.message || 'Error al crear la sala');
       }
     });
   };
@@ -62,7 +63,7 @@ export const Home = () => {
     return (
       <div className="flex flex-col items-center justify-center flex-1 p-6 space-y-4">
         <div className="w-8 h-8 border-4 border-slate-800 border-t-white rounded-full animate-spin" />
-        <p className="text-slate-400 text-sm tracking-widest font-bold">RECONECTANDO A SESIÓN...</p>
+        <p className="text-slate-400 text-sm tracking-widest font-bold">RECONECTANDO A PARTIDA...</p>
       </div>
     );
   }
@@ -72,9 +73,9 @@ export const Home = () => {
       <div className="flex flex-col items-center justify-center flex-1 p-6 w-full max-w-sm mx-auto">
         <div className="text-center space-y-2 mb-12">
           <h1 className="text-5xl font-black tracking-tight text-white glow-blue">
-            DUO PLAY
+            UNO ONLINE
           </h1>
-          <p className="text-slate-500 text-xs tracking-[0.3em] uppercase">Dos teléfonos. Una sesión.</p>
+          <p className="text-slate-500 text-xs tracking-[0.3em] uppercase">Multijugador 2-4 Jugadores</p>
         </div>
 
         <div className="w-full space-y-4">
@@ -83,14 +84,14 @@ export const Home = () => {
             className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-200 text-black font-black py-4 px-6 rounded-2xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
           >
             <Gamepad2 size={24} />
-            CREAR SESIÓN
+            CREAR SALA
           </button>
           <button 
             onClick={() => { setName(''); setRoomCode(''); setError(''); setMode('join'); }}
             className="w-full flex items-center justify-center gap-3 panel-dark hover:bg-[#111] border border-[#333] text-white font-black py-4 px-6 rounded-2xl transition-transform active:scale-95"
           >
             <Users size={24} />
-            UNIRSE A SESIÓN
+            UNIRSE A SALA
           </button>
         </div>
 
@@ -113,7 +114,7 @@ export const Home = () => {
         </button>
 
         <h2 className="text-2xl font-black text-center text-white">
-          {mode === 'create' ? 'NUEVA SESIÓN' : 'UNIRSE'}
+          {mode === 'create' ? 'NUEVA SALA' : 'UNIRSE'}
         </h2>
 
         <div className="space-y-6">
@@ -129,9 +130,26 @@ export const Home = () => {
             />
           </div>
 
+          {mode === 'create' && (
+            <div>
+              <label className="block text-xs font-bold text-slate-500 mb-2 tracking-widest uppercase">Jugadores (Máximo)</label>
+                  <select 
+                    value={maxPlayers} 
+                    onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
+                    className="flex-1 bg-[#111] border border-[#333] text-white p-4 rounded-2xl outline-none focus:border-blue-500 transition-colors cursor-pointer text-sm font-bold tracking-widest uppercase"
+                  >
+                    <option value={2}>2 JUGADORES</option>
+                    <option value={3}>3 JUGADORES</option>
+                    <option value={4}>4 JUGADORES</option>
+                    <option value={5}>5 JUGADORES</option>
+                    <option value={6}>6 JUGADORES</option>
+                  </select>
+            </div>
+          )}
+
           {mode === 'join' && (
             <div>
-              <label className="block text-xs font-bold text-slate-500 mb-2 tracking-widest uppercase">Código de Sesión</label>
+              <label className="block text-xs font-bold text-slate-500 mb-2 tracking-widest uppercase">Código de Sala</label>
               <input
                 type="text"
                 value={roomCode}
@@ -150,7 +168,7 @@ export const Home = () => {
             onClick={mode === 'create' ? handleCreate : handleJoin}
             className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-4 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] active:scale-95 mt-4"
           >
-            {mode === 'create' ? 'CREAR SESIÓN' : 'ENTRAR'}
+            {mode === 'create' ? 'CREAR SALA' : 'ENTRAR'}
           </button>
         </div>
       </div>
