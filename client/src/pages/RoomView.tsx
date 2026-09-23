@@ -283,7 +283,7 @@ export const RoomView = () => {
                 <button
                   onClick={handleStartGame}
                   disabled={!canStart}
-                  className="w-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 hover:from-blue-500 hover:via-blue-400 hover:to-blue-500 disabled:from-[#222] disabled:to-[#222] disabled:text-slate-500 disabled:shadow-none text-white font-black py-4 px-6 rounded-2xl transition-all shadow-[0_0_30px_rgba(59,130,246,0.6)] active:scale-95 border border-blue-400/50 disabled:border-[#333] flex items-center justify-center gap-3 overflow-hidden group min-h-[64px]"
+                  className="relative w-full bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 hover:from-blue-500 hover:via-blue-400 hover:to-blue-500 disabled:from-[#222] disabled:to-[#222] disabled:text-slate-500 disabled:shadow-none text-white font-black py-4 px-6 rounded-2xl transition-all shadow-[0_0_30px_rgba(59,130,246,0.6)] active:scale-95 border border-blue-400/50 disabled:border-[#333] flex items-center justify-center gap-3 overflow-hidden group min-h-[64px]"
                 >
                   <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out hidden sm:block" />
                   <Play size={20} fill="currentColor" className="relative z-10" /> 
