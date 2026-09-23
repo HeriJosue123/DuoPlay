@@ -134,9 +134,18 @@ export const Home = () => {
         </div>
       </div>
 
-      {/* Top Settings Icon */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
-        <button className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-black/40 border border-white/10 hover:border-white/30 hover:bg-black/60 flex items-center justify-center transition-all text-white backdrop-blur-md group shadow-lg">
+      {/* Top Right Header (Server Status & Settings) */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 flex items-center gap-3 sm:gap-4">
+        {/* Server Status Pill */}
+        <div className="flex items-center gap-2 sm:gap-3 bg-black/60 border border-white/10 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full backdrop-blur-md shadow-xl">
+          <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_12px_#22c55e]' : 'bg-red-500 shadow-[0_0_12px_#ef4444]'} animate-pulse`} />
+          <span className="text-[10px] sm:text-xs font-black text-zinc-200 tracking-[0.2em] uppercase">
+            {isConnected ? 'SERVIDOR ONLINE' : 'SERVIDOR OFFLINE'}
+          </span>
+        </div>
+
+        {/* Settings Icon */}
+        <button className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl bg-black/40 border border-white/10 hover:border-white/30 hover:bg-black/60 flex items-center justify-center transition-all text-white backdrop-blur-md group shadow-lg">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:rotate-90 transition-transform duration-500"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
       </div>
@@ -196,13 +205,7 @@ export const Home = () => {
             </button>
           </div>
 
-          {/* Server Status Pill */}
-          <div className="mt-8 sm:mt-10 lg:mt-8 flex items-center gap-2 sm:gap-3 bg-black/60 border border-white/10 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full backdrop-blur-md shadow-xl">
-            <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_12px_#22c55e]' : 'bg-red-500 shadow-[0_0_12px_#ef4444]'} animate-pulse`} />
-            <span className="text-[10px] sm:text-xs font-black text-zinc-200 tracking-[0.2em] uppercase">
-              {isConnected ? 'SERVIDOR ONLINE' : 'SERVIDOR OFFLINE'}
-            </span>
-          </div>
+
 
         </div>
       ) : (
