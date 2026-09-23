@@ -73,23 +73,23 @@ export const UnoBoard: React.FC<UnoBoardProps> = ({ room }) => {
     opponents.push(getOpponentData(state.players[oppIndex]));
   }
 
-  const oppLeft = getOpponentData(len >= 3 ? state.players[(myPlayerIndex + 1) % len] : null);
-  const oppTop = getOpponentData(
-    len === 2 ? state.players[(myPlayerIndex + 1) % len] :
-    len >= 3 ? state.players[(myPlayerIndex + 2) % len] : null
-  );
-  const oppRight = getOpponentData(len === 4 ? state.players[(myPlayerIndex + 3) % len] : null);
+  let oppLeft = null;
+  let oppTop = null;
+  let oppRight = null;
+
+  if (len === 2) {
+    oppTop = getOpponentData(state.players[(myPlayerIndex + 1) % len]);
+  } else if (len === 3) {
+    oppLeft = getOpponentData(state.players[(myPlayerIndex + 1) % len]);
+    oppTop = getOpponentData(state.players[(myPlayerIndex + 2) % len]);
+  } else if (len === 4) {
+    oppLeft = getOpponentData(state.players[(myPlayerIndex + 1) % len]);
+    oppTop = getOpponentData(state.players[(myPlayerIndex + 2) % len]);
+    oppRight = getOpponentData(state.players[(myPlayerIndex + 3) % len]);
+  }
 
   const renderSeat = (opp: any, positionClass: string) => {
-    if (!opp) {
-      return (
-        <div className={`absolute flex flex-col items-center opacity-30 ${positionClass}`}>
-          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/5 rounded-full border border-white/10 flex items-center justify-center border-dashed">
-            <span className="text-white/30 text-[9px] sm:text-[10px] font-bold text-center leading-tight">SIN<br/>JUGADOR</span>
-          </div>
-        </div>
-      );
-    }
+    if (!opp) return null;
     
     return (
       <PlayerSeat 
@@ -196,9 +196,9 @@ export const UnoBoard: React.FC<UnoBoardProps> = ({ room }) => {
 
       {/* Opponents */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="pointer-events-auto">{renderSeat(oppLeft, "top-[35%] sm:top-[40%] left-[2%] sm:left-[10%]")}</div>
+        <div className="pointer-events-auto">{renderSeat(oppLeft, "top-[25%] sm:top-[30%] left-[2%] sm:left-[10%]")}</div>
         <div className="pointer-events-auto">{renderSeat(oppTop, "top-[5%] sm:top-[8%] left-1/2 -translate-x-1/2")}</div>
-        <div className="pointer-events-auto">{renderSeat(oppRight, "top-[35%] sm:top-[40%] right-[2%] sm:right-[10%]")}</div>
+        <div className="pointer-events-auto">{renderSeat(oppRight, "top-[25%] sm:top-[30%] right-[2%] sm:right-[10%]")}</div>
       </div>
 
       {/* Center Table */}

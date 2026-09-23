@@ -59,7 +59,7 @@ export const UnoHand: React.FC<UnoHandProps> = ({
   };
 
   return (
-    <div className="relative w-full flex justify-center items-end px-2 sm:px-8 h-[140px] sm:h-[200px] mb-2 sm:mb-4 pointer-events-none">
+    <div className="relative w-full flex justify-center items-end px-2 sm:px-8 h-[120px] sm:h-[180px] mb-2 sm:mb-4 pointer-events-none">
       <div 
         ref={scrollRef}
         className="flex justify-center items-end relative pointer-events-auto h-full w-full max-w-[800px]"
@@ -68,14 +68,19 @@ export const UnoHand: React.FC<UnoHandProps> = ({
           const isPlayable = checkPlayable(card);
           const isSelected = selectedCardId === card.id;
           
-          const maxOverlap = 70;
-          const baseOverlap = cards.length > 5 ? Math.min(maxOverlap, (cards.length - 5) * 4 + 10) : (cards.length > 1 ? 5 : 0);
-          const marginStr = index === 0 ? '0' : `-${baseOverlap}%`;
+          let overlapPercent = 0;
+          if (cards.length > 1) {
+            if (cards.length <= 7) overlapPercent = (cards.length - 1) * 4; // up to 24%
+            else if (cards.length <= 12) overlapPercent = 24 + (cards.length - 7) * 6; // up to 54%
+            else overlapPercent = Math.min(82, 54 + (cards.length - 12) * 3.5); // max 82%
+          }
+          const marginStr = index === 0 ? '0' : `-${overlapPercent}%`;
           
           const mid = (cards.length - 1) / 2;
           const distance = index - mid;
-          const rotation = distance * (cards.length > 12 ? 1 : 2.5);
-          const translateY = Math.abs(distance) * (cards.length > 12 ? 1 : 2);
+          const rotFactor = cards.length > 12 ? 1.5 : cards.length > 7 ? 2.5 : 4;
+          const rotation = distance * rotFactor;
+          const translateY = Math.abs(distance) * 2;
           
           return (
             <div 
@@ -93,7 +98,7 @@ export const UnoHand: React.FC<UnoHandProps> = ({
                   isPlayable={isPlayable}
                   isSelected={isSelected}
                   onClick={() => isPlayable && onSelectCard(card.id)}
-                  className={`!w-full !h-full ${isSelected ? '!scale-110 -translate-y-4 sm:-translate-y-8' : 'hover:-translate-y-4 sm:hover:-translate-y-8'}`}
+                  className={`!w-full !h-full transition-transform duration-200 ${isSelected ? '!scale-110 -translate-y-4 sm:-translate-y-8' : 'hover:-translate-y-4 sm:hover:-translate-y-8'}`}
                 />
               </div>
             </div>
