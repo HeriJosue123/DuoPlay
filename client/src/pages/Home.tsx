@@ -93,8 +93,8 @@ export const Home = () => {
         <div className="absolute top-1/2 right-0 translate-x-1/2 -translate-y-1/2 w-[600px] h-[800px] bg-[radial-gradient(ellipse_at_center,_rgba(220,38,38,0.12)_0%,_transparent_70%)]" />
 
         {/* Diagonal Neon Lines - Sharp */}
-        <div className="absolute -top-[20%] left-[10%] w-[2px] h-[140%] bg-blue-500 rotate-[35deg] shadow-[0_0_20px_#3b82f6,0_0_40px_#3b82f6] opacity-80" />
-        <div className="absolute -top-[20%] right-[10%] w-[2px] h-[140%] bg-red-500 rotate-[-35deg] shadow-[0_0_20px_#ef4444,0_0_40px_#ef4444] opacity-80" />
+        <div className="absolute -top-[20%] left-[10%] w-[2px] h-[140%] bg-blue-500 rotate-[35deg] shadow-[0_0_20px_#3b82f6,0_0_40px_#3b82f6] opacity-20 sm:opacity-80" />
+        <div className="absolute -top-[20%] right-[10%] w-[2px] h-[140%] bg-red-500 rotate-[-35deg] shadow-[0_0_20px_#ef4444,0_0_40px_#ef4444] opacity-20 sm:opacity-80" />
 
         {/* Decorative Floating Cards - Correct Desktop Sizing (80px - 140px) */}
         {/* Desktop Cards */}
@@ -135,12 +135,12 @@ export const Home = () => {
       </div>
 
       {/* Top Right Header (Server Status & Settings) */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 flex items-center gap-3 sm:gap-4">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50 flex items-center gap-2 sm:gap-4">
         {/* Server Status Pill */}
-        <div className="flex items-center gap-2 sm:gap-3 bg-black/60 border border-white/10 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full backdrop-blur-md shadow-xl">
+        <div className="flex items-center gap-2 sm:gap-3 bg-black/60 border border-white/10 px-3 sm:px-6 py-1.5 sm:py-3 rounded-full backdrop-blur-md shadow-xl">
           <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? 'bg-green-500 shadow-[0_0_12px_#22c55e]' : 'bg-red-500 shadow-[0_0_12px_#ef4444]'} animate-pulse`} />
           <span className="text-[10px] sm:text-xs font-black text-zinc-200 tracking-[0.2em] uppercase">
-            {isConnected ? 'SERVIDOR ONLINE' : 'SERVIDOR OFFLINE'}
+            <span className="hidden sm:inline">SERVIDOR </span>{isConnected ? 'ONLINE' : 'OFFLINE'}
           </span>
         </div>
 
@@ -154,7 +154,7 @@ export const Home = () => {
         <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-[800px] px-4 sm:px-6 flex-1 py-8 sm:py-12 lg:py-4">
           
           {/* Logo Section */}
-          <div className="text-center mb-8 sm:mb-10 relative">
+          <div className="text-center mt-12 sm:mt-0 mb-8 sm:mb-10 relative">
             <div className="filter drop-shadow-[0_0_20px_rgba(59,130,246,0.6)]">
               <h1 className="text-[clamp(4.5rem,15vw,8rem)] lg:text-[5.5rem] xl:text-[6.5rem] leading-none font-black text-transparent bg-clip-text bg-gradient-to-b from-blue-300 via-blue-500 to-blue-700 tracking-tighter italic">
                 UNO
@@ -167,7 +167,7 @@ export const Home = () => {
             </div>
             
             {/* Swoosh simulation */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[110%] sm:h-[130%] lg:w-[115%] lg:h-[115%] border-[4px] sm:border-[8px] border-transparent border-t-red-600 border-l-red-600 rounded-[100%] rotate-[-15deg] opacity-90 shadow-[0_0_15px_rgba(220,38,38,0.6)] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[110%] sm:h-[130%] lg:w-[115%] lg:h-[115%] border-2 sm:border-[8px] border-transparent border-t-red-600 border-l-red-600 rounded-[100%] rotate-[-15deg] opacity-40 sm:opacity-90 shadow-[0_0_15px_rgba(220,38,38,0.6)] pointer-events-none" />
             
             <p className="text-zinc-300 font-black text-[10px] sm:text-sm tracking-[0.3em] sm:tracking-[0.5em] uppercase mt-6 sm:mt-10 lg:mt-6 relative z-20">
               Multijugador 2-6 Jugadores
@@ -176,10 +176,10 @@ export const Home = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="w-[calc(100%-16px)] sm:w-[420px] max-w-full space-y-4 lg:space-y-4">
+          <div className="w-[calc(100%-16px)] sm:w-[420px] max-w-full space-y-3 sm:space-y-4 lg:space-y-4">
             <button 
               onClick={() => { setName(''); setRoomCode(''); setError(''); setMode('create'); }}
-              className="group relative w-full flex items-center justify-center bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 hover:from-blue-500 hover:via-blue-400 hover:to-blue-500 text-white font-black py-4 sm:py-5 px-6 rounded-2xl transition-all shadow-[0_0_30px_rgba(59,130,246,0.6)] active:scale-95 border border-blue-400/50 overflow-hidden min-h-[56px] sm:min-h-[72px] lg:min-h-[64px]"
+              className="group relative w-full flex items-center justify-center bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 hover:from-blue-500 hover:via-blue-400 hover:to-blue-500 text-white font-black py-3 sm:py-5 px-6 rounded-2xl transition-all shadow-[0_0_30px_rgba(59,130,246,0.6)] active:scale-95 border border-blue-400/50 overflow-hidden min-h-[48px] sm:min-h-[72px] lg:min-h-[64px]"
             >
               <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out" />
               <div className="flex items-center gap-3 text-base sm:text-xl tracking-widest z-10 drop-shadow-md">
@@ -193,7 +193,7 @@ export const Home = () => {
             
             <button 
               onClick={() => { setName(''); setRoomCode(''); setError(''); setMode('join'); }}
-              className="group relative w-full flex items-center justify-center bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 hover:border-white/40 text-white font-black py-4 sm:py-5 px-6 rounded-2xl transition-all active:scale-95 overflow-hidden min-h-[56px] sm:min-h-[72px] lg:min-h-[64px] shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
+              className="group relative w-full flex items-center justify-center bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 hover:border-white/40 text-white font-black py-3 sm:py-5 px-6 rounded-2xl transition-all active:scale-95 overflow-hidden min-h-[48px] sm:min-h-[72px] lg:min-h-[64px] shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
             >
               <div className="flex items-center gap-3 text-base sm:text-xl tracking-widest z-10 text-zinc-200 group-hover:text-white transition-colors">
                 <Users size={24} className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -286,40 +286,40 @@ export const Home = () => {
 
       {/* Footer Indicators - Responsive Grid/Flex layout */}
       {mode === 'menu' && (
-        <div className="w-full px-4 sm:px-8 pb-6 sm:pb-8 pt-4 z-20 mt-auto">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-12 lg:gap-20 text-left w-full max-w-5xl mx-auto">
+        <div className="w-full px-2 sm:px-8 pb-6 sm:pb-8 pt-4 z-20 mt-auto">
+          <div className="flex flex-row items-start sm:items-center justify-between sm:justify-center gap-1 sm:gap-12 lg:gap-20 text-center sm:text-left w-full max-w-5xl mx-auto">
             
-            <div className="flex items-center gap-4 bg-black/40 sm:bg-transparent px-6 py-3 sm:px-0 sm:py-0 rounded-2xl sm:rounded-none w-full sm:w-auto justify-center sm:justify-start border border-white/5 sm:border-none backdrop-blur-sm sm:backdrop-blur-none">
-              <div className="bg-blue-500/20 p-2 sm:p-0 rounded-lg sm:bg-transparent">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 w-5 h-5 sm:w-6 sm:h-6"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-4 bg-transparent px-1 py-1 sm:px-0 sm:py-0 w-[32%] sm:w-auto justify-start border-none">
+              <div className="bg-blue-500/20 p-1.5 sm:p-0 rounded-lg sm:bg-transparent mb-1 sm:mb-0">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
               </div>
               <div className="flex flex-col">
-                <span className="text-white text-[11px] sm:text-xs font-black tracking-widest uppercase">Rápido</span>
-                <span className="text-zinc-500 text-[9px] sm:text-[10px] font-bold tracking-widest uppercase mt-0.5">Juega al instante</span>
+                <span className="text-white text-[9px] sm:text-[11px] lg:text-xs font-black tracking-widest uppercase">Rápido</span>
+                <span className="text-zinc-500 text-[7px] sm:text-[9px] lg:text-[10px] font-bold tracking-widest uppercase mt-0 sm:mt-0.5 leading-tight">Juega al instante</span>
               </div>
             </div>
 
             <div className="hidden sm:block w-px h-10 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
 
-            <div className="flex items-center gap-4 bg-black/40 sm:bg-transparent px-6 py-3 sm:px-0 sm:py-0 rounded-2xl sm:rounded-none w-full sm:w-auto justify-center sm:justify-start border border-white/5 sm:border-none backdrop-blur-sm sm:backdrop-blur-none">
-              <div className="bg-green-500/20 p-2 sm:p-0 rounded-lg sm:bg-transparent">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-500 w-5 h-5 sm:w-6 sm:h-6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-4 bg-transparent px-1 py-1 sm:px-0 sm:py-0 w-[32%] sm:w-auto justify-start border-none">
+              <div className="bg-green-500/20 p-1.5 sm:p-0 rounded-lg sm:bg-transparent mb-1 sm:mb-0">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-green-500 w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
               </div>
               <div className="flex flex-col">
-                <span className="text-white text-[11px] sm:text-xs font-black tracking-widest uppercase">Seguro</span>
-                <span className="text-zinc-500 text-[9px] sm:text-[10px] font-bold tracking-widest uppercase mt-0.5">Tus partidas protegidas</span>
+                <span className="text-white text-[9px] sm:text-[11px] lg:text-xs font-black tracking-widest uppercase">Seguro</span>
+                <span className="text-zinc-500 text-[7px] sm:text-[9px] lg:text-[10px] font-bold tracking-widest uppercase mt-0 sm:mt-0.5 leading-tight">Tus partidas protegidas</span>
               </div>
             </div>
 
             <div className="hidden sm:block w-px h-10 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
 
-            <div className="flex items-center gap-4 bg-black/40 sm:bg-transparent px-6 py-3 sm:px-0 sm:py-0 rounded-2xl sm:rounded-none w-full sm:w-auto justify-center sm:justify-start border border-white/5 sm:border-none backdrop-blur-sm sm:backdrop-blur-none">
-              <div className="bg-purple-500/20 p-2 sm:p-0 rounded-lg sm:bg-transparent">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500 w-5 h-5 sm:w-6 sm:h-6"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-4 bg-transparent px-1 py-1 sm:px-0 sm:py-0 w-[32%] sm:w-auto justify-start border-none">
+              <div className="bg-purple-500/20 p-1.5 sm:p-0 rounded-lg sm:bg-transparent mb-1 sm:mb-0">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-purple-500 w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
               </div>
               <div className="flex flex-col">
-                <span className="text-white text-[11px] sm:text-xs font-black tracking-widest uppercase">Divertido</span>
-                <span className="text-zinc-500 text-[9px] sm:text-[10px] font-bold tracking-widest uppercase mt-0.5">Conecta y disfruta</span>
+                <span className="text-white text-[9px] sm:text-[11px] lg:text-xs font-black tracking-widest uppercase">Divertido</span>
+                <span className="text-zinc-500 text-[7px] sm:text-[9px] lg:text-[10px] font-bold tracking-widest uppercase mt-0 sm:mt-0.5 leading-tight">Conecta y disfruta</span>
               </div>
             </div>
 
