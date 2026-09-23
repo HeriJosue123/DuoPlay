@@ -22,7 +22,7 @@ export const ActionHUD: React.FC<ActionHUDProps> = ({
   if (!canICallUno && vulnerableOpponents.length === 0) return null;
 
   return (
-    <div className="fixed bottom-[140px] sm:bottom-[180px] left-1/2 -translate-x-1/2 flex flex-col gap-3 z-[60] items-center pointer-events-auto">
+    <div className="fixed bottom-[220px] sm:bottom-[280px] left-1/2 -translate-x-1/2 flex flex-col gap-3 z-[60] items-center pointer-events-auto">
       
       {/* Call UNO Button */}
       {canICallUno && (

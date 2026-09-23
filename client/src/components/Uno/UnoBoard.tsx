@@ -194,22 +194,22 @@ export const UnoBoard: React.FC<UnoBoardProps> = ({ room }) => {
         }} />
       </div>
 
-      {/* Side Opponents - Fixed to edges so they don't break center layout */}
+      {/* Side Opponents - Fixed to edges so they don't break vertical layout */}
       <div className="absolute inset-0 pointer-events-none z-10">
         {oppLeft && <div className="pointer-events-auto absolute top-1/2 -translate-y-1/2 left-[2%] sm:left-[10%]">{renderSeat(oppLeft, "left")}</div>}
         {oppRight && <div className="pointer-events-auto absolute top-1/2 -translate-y-1/2 right-[2%] sm:right-[10%]">{renderSeat(oppRight, "right")}</div>}
       </div>
 
-      {/* THE UNIFIED, CENTERED GAME BLOCK */}
-      <div className="relative w-full max-w-[1000px] flex flex-col items-center justify-center gap-4 sm:gap-8 z-20 px-1 sm:px-4">
-
-         {/* 1. TOP OPPONENT */}
-         <div className="pointer-events-auto w-full flex justify-center z-20">
+      {/* MAIN GAME LAYOUT - 3 CONTROLLED ZONES */}
+      <div className="relative w-full h-full max-w-[900px] mx-auto flex flex-col z-20 px-1 sm:px-4">
+         
+         {/* 1. TOP OPPONENT (Fixed near top, pushed down slightly from header) */}
+         <div className="w-full flex justify-center mt-[8vh] sm:mt-12 pointer-events-auto z-20 flex-shrink-0">
             {oppTop && renderSeat(oppTop, "top")}
          </div>
 
-         {/* 2. CENTER TABLE & TURN INDICATOR */}
-         <div className="flex flex-col items-center justify-center gap-2 sm:gap-4 w-full z-10 pointer-events-auto">
+         {/* 2. CENTER TABLE ZONE (Takes remaining space and centers vertically) */}
+         <div className="flex-1 w-full flex flex-col items-center justify-center pointer-events-auto z-10 min-h-0">
             <CenterTable 
               topCard={topCard}
               drawPileCount={state.drawPileCount}
@@ -220,7 +220,8 @@ export const UnoBoard: React.FC<UnoBoardProps> = ({ room }) => {
               canDraw={isMyTurn && !state.playerWhoDrew}
             />
             
-            <div className="flex items-center justify-center gap-3 sm:gap-4 transition-opacity duration-300">
+            {/* Turn Indicator directly below table */}
+            <div className="flex items-center justify-center gap-3 sm:gap-4 transition-opacity duration-300 mt-4 sm:mt-6">
               <div className={`px-4 sm:px-6 py-1.5 sm:py-2 rounded-full border-2 font-black text-[10px] sm:text-[12px] tracking-widest flex items-center gap-2 ${isMyTurn ? 'border-yellow-400 text-yellow-400 bg-black/80 shadow-[0_0_15px_rgba(250,204,21,0.4)]' : 'border-zinc-700 text-zinc-400 bg-black/60'}`}>
                 <span className="w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-current flex items-center justify-center text-[8px] sm:text-[10px]">
                   {isMyTurn ? 'T' : 'E'}
@@ -234,10 +235,11 @@ export const UnoBoard: React.FC<UnoBoardProps> = ({ room }) => {
             </div>
          </div>
 
-         {/* 3. HUD + PLAYER HAND */}
-         <div className="flex flex-col items-center gap-1 sm:gap-2 w-full z-20 pointer-events-auto">
-            {/* TÚ HUD (Tightly coupled with the hand) */}
-            <div className="w-full flex justify-start px-2 sm:px-8">
+         {/* 3. HUD + PLAYER HAND (Fixed near bottom, pushed up slightly) */}
+         <div className="w-full flex flex-col items-center mb-[6vh] sm:mb-12 pointer-events-auto z-20 flex-shrink-0">
+            
+            {/* TÚ HUD (Constrained width so it aligns tightly above the left side of the hand) */}
+            <div className="w-full max-w-[500px] flex justify-start px-4 sm:px-8 mb-1 sm:mb-2">
                <div className={`bg-[#111]/90 backdrop-blur-md border ${isMyTurn ? 'border-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.2)]' : 'border-white/10'} p-1.5 pr-4 sm:p-2 sm:pr-6 rounded-xl flex items-center gap-2 sm:gap-3 transition-all`}>
                   <div className={`w-8 h-8 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center border ${isMyTurn ? 'bg-gradient-to-tr from-[#ff1744] via-[#ffea00] to-[#2979ff] animate-spin-slow border-transparent' : 'bg-zinc-800 border-white/5'}`}>
                     <div className="w-[85%] h-[85%] bg-black rounded flex items-center justify-center">

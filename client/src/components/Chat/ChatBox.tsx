@@ -61,20 +61,6 @@ export const ChatBox = ({ room }: { room: Room }) => {
           )}
         </button>
 
-        <button 
-          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 text-white flex flex-col items-center justify-center shadow-lg backdrop-blur-md transition-all active:scale-95 group"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:text-blue-400 transition-colors"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-          <span className="text-[8px] sm:text-[9px] font-bold mt-0.5">Jugadores</span>
-        </button>
-
-        <button 
-          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/60 hover:bg-black/80 border border-white/10 text-white flex flex-col items-center justify-center shadow-lg backdrop-blur-md transition-all active:scale-95 group"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:text-red-400 transition-colors"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
-          <span className="text-[8px] sm:text-[9px] font-bold mt-0.5">Reportar</span>
-        </button>
-
       </div>
 
       {/* Chat Drawer/Modal */}

@@ -117,7 +117,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({ player, isCurrentTurn, p
       </div>
 
       {/* Hand visualization */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 translate-y-8 pointer-events-none">
+      <div className="mt-2 sm:mt-3 pointer-events-none z-0">
         {renderCards()}
       </div>
       
