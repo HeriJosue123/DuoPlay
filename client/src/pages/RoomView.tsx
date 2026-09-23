@@ -164,7 +164,7 @@ export const RoomView = () => {
         <div className="fixed inset-0 flex flex-col items-center overflow-y-auto overflow-x-hidden bg-[#020202] selection:bg-blue-500/30 font-sans z-0">
           
           {/* Premium Background Ambience */}
-          <div className="absolute inset-0 pointer-events-none z-0 min-h-[100dvh]">
+          <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden min-h-[100dvh]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#0a0f1c_0%,_#020202_80%)] opacity-100" />
             <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: `linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 1) 25%, rgba(255, 255, 255, 1) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, 1) 75%, rgba(255, 255, 255, 1) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 1) 25%, rgba(255, 255, 255, 1) 26%, transparent 27%, transparent 74%, rgba(255, 255, 255, 1) 75%, rgba(255, 255, 255, 1) 76%, transparent 77%, transparent)`, backgroundSize: '50px 50px' }} />
             <div className="absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[800px] bg-[radial-gradient(ellipse_at_center,_rgba(37,99,235,0.15)_0%,_transparent_70%)]" />
