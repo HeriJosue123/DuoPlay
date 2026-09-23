@@ -73,18 +73,13 @@ export class SocketManager {
         const room = result.room;
         this.broadcastRoomUpdate(room, 'player_joined');
         
-        // Auto-start game logic
-        // If room is full, start the game. Or wait for explicit 'start_game' event?
-        // User requested: "Cuando haya jugadores suficientes: permitir iniciar." via a button in the lobby.
-        // For now, let's just emit player_joined. The explicit start_game event will trigger UnoEngine.
+        // Reconnection scenario: sanitize room for the callback so client gets their hand and doesn't leak others
+        const safeRoom = {
+          ...room,
+          gameState: room.gameState ? this.unoEngine.getSanitizedState(room, player.id) : undefined
+        };
         
-        if (room.gameState) {
-          // Reconnection scenario: send the sanitized state directly to the rejoining player
-          const safeState = this.unoEngine.getSanitizedState(room, player.id);
-          socket.emit('game_state_updated', safeState);
-        }
-
-        callback({ success: true, room: result.room });
+        callback({ success: true, room: safeRoom });
       } else {
         callback({ success: false, message: result.message });
       }
